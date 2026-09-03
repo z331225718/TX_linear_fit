@@ -1,0 +1,22 @@
+# Python
+__pycache__/
+*.pyc
+
+# MATLAB sandbox workaround dirs (regenerable)
+.fake_userprofile/
+.fake_appdata/
+.fake_localappdata/
+.fake_programdata/
+.matlab_prefs/
+.tmp/
+MathWorks/
+
+# Runtime outputs (regenerable by run_tx_linear_fit.py)
+results/
+txcross.csv
+txhist.csv
+
+# Large golden dumps (regenerate via matlab_golden/capture_golden*.m)
+verification/golden_run.json
+verification/golden_run_b.json
+verification/probe_csvtest.csv
