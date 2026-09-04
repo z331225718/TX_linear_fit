@@ -1,22 +1,58 @@
-# Python
+# Python caches and local environments
 __pycache__/
-*.pyc
+*.py[cod]
+.pytest_cache/
+.coverage
+htmlcov/
+.venv/
+venv/
+build/
+dist/
+*.egg-info/
 
-# MATLAB sandbox workaround dirs (regenerable)
-.fake_userprofile/
-.fake_appdata/
-.fake_localappdata/
-.fake_programdata/
-.matlab_prefs/
-.tmp/
-MathWorks/
+# Input captures and generated artifacts
+/data/
+/outputs/
+/results/
+/verification/
+/python_src/results/
+/python_src/report_*.html
+/*_report.html
+**/txcross.csv
+**/txhist.csv
 
-# Runtime outputs (regenerable by run_tx_linear_fit.py)
-results/
-txcross.csv
-txhist.csv
+# Legacy ports, MATLAB references, and validation work
+/python/
+/matlab_src/
+/matlab_golden/
+/matlab_runs/
+/MathWorks/
+/.matlab_prefs/
+/PLAN.md
+/DS4_OPTIMIZATION_PLAN.md
+/COMPARISON_REPORT.md
+/python_src/generate_report.py
+/python_src/gen_waveform.py
+/python_src/verify_against_golden.py
+/python_src/tests/test_s3.py
+/gen_channel_waveform.py
+/gen_hb_report.py
+/hb_analysis.py
 
-# Large golden dumps (regenerate via matlab_golden/capture_golden*.m)
-verification/golden_run.json
-verification/golden_run_b.json
-verification/probe_csvtest.csv
+# Local research and scratch material
+/_*.html
+/_*.pdf
+/_review/
+/_review_team_tmp/
+/.fake_userprofile/
+/.fake_appdata/
+/.fake_localappdata/
+/.fake_programdata/
+/.tmp/
+/.workbuddy/
+
+# Editor and OS files
+.vscode/
+.idea/
+Thumbs.db
+Desktop.ini
