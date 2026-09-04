@@ -27,18 +27,24 @@
 | 符号/参数 | 含义 | 代码参数 |
 |---|---|---|
 | $R_s$ | 符号率，单位 baud | `symbol_rate` |
-| UI | 一个符号周期，$T_{UI}=1/R_s$ | - |
+| UI | 一个符号周期，$T_{\mathrm{UI}}=1/R_s$ | - |
 | $M$ | 每 UI 的分析采样数，即 OSR | `osr` |
+| $N_s$ | 输入记录的采样点数 | 由输入文件决定 |
 | $N$ | 参与拟合的符号数 | 由输入长度决定 |
 | $N_p$ | 拟合脉冲包含的总 UI 数 | `total_cursor_fit` |
 | $D_p$ | 拟合窗口中主光标之前的 UI 数 | `pre_cursor_fit` |
 | $N_w$ | 分析 FFE 的总 tap 数 | `total_cursor_ffe` |
 | $D_w$ | FFE 主 tap 之前的 tap 数 | `pre_cursor_ffe` |
-| $N_{DFE}$ | DFE post-cursor tap 数 | `dfe_tap_num` |
-| $y(k)$ | 示波器采集并重采样后的波形 | `stream_input_interp` |
-| $x(n)$ | 与波形对齐的理想符号 | `stream_decision_interp` |
-| $p(k)$ | 线性拟合得到的脉冲响应 | `fit_results['p']` |
-| $e(k)$ | 实测波形与线性模型之差 | `fit_results['e']` |
+| $N_{\mathrm{DFE}}$ | DFE post-cursor tap 数 | `dfe_tap_num` |
+| $y[k]$ | 示波器采集并重采样后的波形 | `stream_input_interp` |
+| $x[n]$ | 与波形对齐的理想符号 | `stream_decision_interp` |
+| $p[k]$ | 线性拟合得到的脉冲响应 | `fit_results['p']` |
+| $e[k]$ | 实测波形与线性模型之差 | `fit_results['e']` |
+
+公式中，斜体小写字母表示标量，粗体小写字母表示向量，粗体大写字母表示矩阵；
+$(\cdot)^{\mathsf T}$ 表示转置，$\lVert\cdot\rVert_2$ 和
+$\lVert\cdot\rVert_{\mathrm F}$ 分别表示 Euclidean 范数与 Frobenius 范数。代码字段仍以
+等宽字体书写，避免把实现名称误当成数学变量。
 
 这里的 FFE 是**分析侧逆滤波器**。GUI 默认 18 tap 表示用 18 个系数观察可恢复性，
 并不表示 DUT 的发送端硬件一定有 18 个 tap，也不等同于协议中的 TX FIR tap 数。
@@ -47,21 +53,28 @@
 
 ### 3.1 输入与 OSR
 
-带时间轴时，程序先取相邻采样间隔的中位数 $\widetilde{\Delta t}$，计算
+带时间轴时，程序先用相邻采样间隔估计标称采样周期，再计算局部与整段记录的采样密度：
 
 $$
-M_{native}=\frac{1}{R_s\widetilde{\Delta t}},\qquad
-M_{effective}=\frac{N_s-1}{(t_{end}-t_0)R_s}.
+\begin{aligned}
+\widetilde{\Delta t}
+  &= \operatorname{median}_{0\le k<N_s-1}\!\left(t_{k+1}-t_k\right), \\
+M_{\mathrm{native}}
+  &= \frac{1}{R_s\widetilde{\Delta t}}, \\
+M_{\mathrm{effective}}
+  &= \frac{N_s-1}{R_s\left(t_{N_s-1}-t_0\right)} .
+\end{aligned}
 $$
 
 二者分别描述局部采样网格和整段记录的平均采样密度。自动模式把两者取最近整数，
-仅在结果一致、$M\ge 2$ 且 $M_{native}$ 距最近整数不超过 10% 时接受。程序还根据
+仅在结果一致、$M\ge 2$ 且 $M_{\mathrm{native}}$ 距最近整数不超过 10% 时接受。程序还根据
 $\Delta t/\widetilde{\Delta t}$ 的整数倍估计缺失采样比例，并将诊断信息写入报告。
 
-确定 $M$ 后，带时间轴波形会线性插值到
+确定整数 OSR $M$ 后，带时间轴波形会线性插值到均匀分析网格
 
 $$
-t_k=\frac{k}{M R_s}.
+t_k^{\ast}=t_0+\frac{k}{M R_s},
+\qquad k=0,1,\ldots,N_s^{\ast}-1 .
 $$
 
 只有电压值的文件无法从自身判断采样率，因此必须手动指定 OSR。对带时间轴数据手动
@@ -96,45 +109,91 @@ QPRBS13-CEI 定义一致。工具使用固定非零种子，波形与本地序�
 
 ### 4.1 从卷积模型到矩阵模型
 
-把波形按 UI 折叠为 $M\times N$ 矩阵：
+把波形按 UI 折叠为 $M\times N$ 数据矩阵 $\mathbf Y$：
 
 $$
-Y_{m,n}=y(nM+m),\qquad 0\le m<M.
+Y_{m,n}=y[nM+m],
+\qquad
+\substack{0\le m<M,\\0\le n<N} .
 $$
 
 将符号序列循环移动 $D_p$ 个 UI，构造包含 $N_p$ 组循环移位符号和一行常数 1 的
-设计矩阵 $X\in\mathbb{R}^{(N_p+1)\times N}$。于是模型可写成
+设计矩阵 $\mathbf X\in\mathbb{R}^{(N_p+1)\times N}$。其元素定义为
 
 $$
-Y\approx PX.
+X_{r,n}=
+\begin{cases}
+x\!\left[\operatorname{mod}(n+D_p-r,\,N)\right],
+  &0\le r<N_p,\\
+1,&r=N_p,
+\end{cases}
+\qquad 0\le n<N .
 $$
 
-$P$ 的前 $N_p$ 列是各 UI 的相位采样响应，最后一列吸收直流偏置。最小二乘问题为
+于是线性模型可写成
 
 $$
-\hat P=\arg\min_P\lVert Y-PX\rVert_F^2.
+\mathbf Y\approx\mathbf P\mathbf X,
+\qquad
+\mathbf P\in\mathbb{R}^{M\times(N_p+1)} .
 $$
 
-对目标函数求导并令其为零：
+$\mathbf P$ 的前 $N_p$ 列是各 UI 的相位采样响应，最后一列吸收直流偏置。以残差能量
+为代价函数，最小二乘问题为
 
 $$
-2(PXX^T-YX^T)=0,
+\widehat{\mathbf P}
+=\underset{\mathbf P}{\operatorname{arg\,min}}
+\;J(\mathbf P),
+\qquad
+J(\mathbf P)=\left\lVert\mathbf Y-\mathbf P\mathbf X\right\rVert_{\mathrm F}^{2} .
 $$
 
-在 $XX^T$ 可逆时得到
+将范数写成迹并对 $\mathbf P$ 求导：
 
 $$
-\boxed{\hat P=YX^T(XX^T)^{-1}}.
+\begin{aligned}
+J(\mathbf P)
+  &=\operatorname{tr}\!\left[
+    (\mathbf Y-\mathbf P\mathbf X)
+    (\mathbf Y-\mathbf P\mathbf X)^{\mathsf T}
+    \right], \\
+\frac{\partial J}{\partial\mathbf P}
+  &=2\!\left(
+    \mathbf P\mathbf X\mathbf X^{\mathsf T}
+    -\mathbf Y\mathbf X^{\mathsf T}
+    \right).
+\end{aligned}
 $$
 
-拟合波形与残差为
+令梯度为零；当 $\mathbf X\mathbf X^{\mathsf T}$ 可逆时，正规方程给出
 
 $$
-L=\hat PX,\qquad E=L-Y.
+\boxed{
+\widehat{\mathbf P}
+=\mathbf Y\mathbf X^{\mathsf T}
+\left(\mathbf X\mathbf X^{\mathsf T}\right)^{-1}
+} .
 $$
 
-将 $\hat P$ 的前 $N_p$ 列按列展开，得到长度为 $M N_p$ 的 $p(k)$；同样按列展开
-$E$ 得到 $e(k)$。代码保留显式正规方程和严格矩阵求逆，以复现参考实现的数值顺序，
+拟合波形与代码采用的残差（拟合值减实测值）为
+
+$$
+\widehat{\mathbf Y}=\widehat{\mathbf P}\mathbf X,
+\qquad
+\mathbf E=\widehat{\mathbf Y}-\mathbf Y .
+$$
+
+将 $\widehat{\mathbf P}$ 的前 $N_p$ 列按列展开，得到长度为 $MN_p$ 的
+$\boldsymbol p$，即
+
+$$
+p[m+Mr]=\widehat P_{m,r},
+\qquad 0\le m<M,\quad 0\le r<N_p .
+$$
+
+同样按列展开 $\mathbf E$ 得到 $\boldsymbol e$。代码保留显式正规方程和
+严格矩阵求逆，以复现参考实现的数值顺序，
 不会在奇异时悄悄改用伪逆。
 
 ### 4.2 脉冲指标
@@ -142,27 +201,44 @@ $E$ 得到 $e(k)$。代码保留显式正规方程和严格矩阵求逆，以复
 稳态电压、脉冲峰值及其比值为
 
 $$
-v_f=\frac{1}{M}\sum_k p(k),\qquad
-p_{max}=\max_k p(k),\qquad
-R_{peak}=\frac{p_{max}}{v_f}.
+\begin{aligned}
+v_{\mathrm f}
+  &=\frac{1}{M}\sum_{k=0}^{MN_p-1}p[k], \\
+p_{\max}
+  &=\max_{0\le k<MN_p}p[k], \\
+r_{\mathrm{peak}}
+  &=\frac{p_{\max}}{v_{\mathrm f}} .
+\end{aligned}
 $$
 
-当前工具用全速率残差中间 80% 的 RMS 作为 $e_{RMS,fit}$，避免记录首尾过渡影响：
+令 $\mathcal I_{80}$ 表示全速率残差中央 80% 样本的索引集合。当前工具使用
 
 $$
-SNDR_{fit}=20\log_{10}\frac{p_{max}}{e_{RMS,fit}}.
+\begin{aligned}
+e_{\mathrm{RMS,fit}}
+  &=\sqrt{\frac{1}{\lvert\mathcal I_{80}\rvert}
+    \sum_{k\in\mathcal I_{80}}e[k]^2}, \\
+\mathrm{SNDR}_{\mathrm{fit}}
+  &=20\log_{10}\!\left(\frac{p_{\max}}{e_{\mathrm{RMS,fit}}}\right)
+    \;\mathrm{dB} .
+\end{aligned}
 $$
 
 报告中的 `SNDR (Fit)` 指的就是这个值。还有一个需要留意的兼容行为：报告字段
 `eRms` 保存的是主采样相位残差的中间 80% RMS，而 `eRmsRatio` 和 `SNDR` 使用的是
 全速率残差 RMS，因此不能用报告中的 `pmax/eRms` 反算出完全相同的 `SNDR`。
 
-工具还将脉冲按主峰相位抽样为 $p_s(i)$，忽略主峰之后的前 10 个 post-cursor，
+工具还将脉冲按主峰相位抽样为 $p_{\mathrm s}[i]$，忽略主峰之后的前 10 个 post-cursor，
 用其余尾部能量定义诊断指标：
 
 $$
-SNR_{ISI}=20\log_{10}
-\frac{\max_i p_s(i)}{\sqrt{\sum_{i>i_{peak}+10}p_s^2(i)}}.
+\mathrm{SNR}_{\mathrm{ISI}}
+=20\log_{10}\!\left(
+\frac{p_{\mathrm s}[i_{\mathrm p}]}
+{\sqrt{\displaystyle\sum_{i=i_{\mathrm p}+11}^{N_p-1}\left(p_{\mathrm s}[i]\right)^2}}
+\right)\;\mathrm{dB},
+\qquad
+i_{\mathrm p}=\underset{i}{\operatorname{arg\,max}}\;p_{\mathrm s}[i] .
 $$
 
 它只描述有限拟合窗口末端的残余 ISI，不是通用噪声 SNR。
@@ -171,52 +247,81 @@ $$
 
 ### 5.1 FFE 最小二乘解
 
-从符号间隔脉冲 $p_s$ 构造 Toeplitz 型卷积矩阵 $P_3$，令目标向量 $x_p$ 在
-$D_p+1$ 位置为 1、其余为 0。FFE 的目标是让均衡脉冲尽量接近单位脉冲：
+从符号间隔脉冲 $p_{\mathrm s}$ 构造 Toeplitz 型卷积矩阵 $\mathbf P_3$，令目标向量
+$\boldsymbol x_p$ 的第 $D_p+1$ 个元素（按 1-based 计数）为 1、其余为 0。FFE 的目标是让
+均衡脉冲尽量接近单位脉冲：
 
 $$
-\hat w=\arg\min_w\lVert P_3w-x_p\rVert_2^2.
+\widehat{\boldsymbol w}
+=\underset{\boldsymbol w}{\operatorname{arg\,min}}
+\left\lVert
+\mathbf P_3\boldsymbol w-\boldsymbol x_p
+\right\rVert_2^2 .
 $$
 
-同样由正规方程得到
+令梯度为零，可得 FFE 正规方程及其闭式解：
 
 $$
-\boxed{\hat w=(P_3^TP_3)^{-1}P_3^Tx_p}.
+\begin{aligned}
+\mathbf P_3^{\mathsf T}\mathbf P_3\widehat{\boldsymbol w}
+  &=\mathbf P_3^{\mathsf T}\boldsymbol x_p, \\
+\widehat{\boldsymbol w}
+  &=\left(\mathbf P_3^{\mathsf T}\mathbf P_3\right)^{-1}
+    \mathbf P_3^{\mathsf T}\boldsymbol x_p .
+\end{aligned}
 $$
 
-`firNum` 是 $\hat w$，无 DFE 时用于画眼图的归一化系数为
+`firNum` 是 $\widehat{\boldsymbol w}$，无 DFE 时用于画眼图的归一化系数为
 
 $$
-firNumNorm_i=\frac{w_i}{\sum_j w_j}.
+\widetilde w_i
+=\frac{\widehat w_i}{\displaystyle\sum_{j=0}^{N_w-1}\widehat w_j},
+\qquad i=0,1,\ldots,N_w-1 .
 $$
 
-这个归一化只保证直流增益 $\sum_i firNumNorm_i=1$，不限制单个系数幅度。如果正负 tap
-互相抵消，使 $\sum_iw_i$ 很小，某个归一化 tap 完全可能大于 1 或小于 -1。这不是数组
+这里的 $\widetilde w_i$ 对应 `firNumNorm[i]`。这个归一化只保证直流增益
+$\sum_i\widetilde w_i=1$，不限制单个系数幅度。如果正负 tap 互相抵消，使
+$\sum_i\widehat w_i$ 很小，某个归一化 tap 完全可能大于 1 或小于 -1。这不是数组
 越界或自动饱和，而是无硬件约束的数学逆滤波结果；系数过大通常意味着噪声增强、脉冲
 窗口不足或通道存在难以逆转的深衰减。
 
 ### 5.2 DFE 目标
 
-启用 $N_{DFE}$ 个 tap 时，程序不再要求前 $N_{DFE}$ 个 post-cursor 在 FFE 输出中为
+启用 $N_{\mathrm{DFE}}$ 个 tap 时，程序不再要求前 $N_{\mathrm{DFE}}$ 个 post-cursor 在 FFE 输出中为
 零，而是把目标设为
 
 $$
-x_p(D_p+j)=\frac{p_s(i_{peak}+j)}{p_s(i_{peak})},\qquad
-1\le j\le N_{DFE}.
+\left(\boldsymbol x_p\right)_{D_p+j}
+=\frac{p_{\mathrm s}[i_{\mathrm p}+j]}{p_{\mathrm s}[i_{\mathrm p}]},
+\qquad j=1,2,\ldots,N_{\mathrm{DFE}} .
 $$
 
 这些值同时作为 `DFEtapWeight`，在硬判决后从当前样本中减去历史符号贡献。FFE+DFE
-分支使用 $\sum_i|w_i|=1$ 的归一化。HTML 中的 Equalized Eye Diagram 使用 FFE-only
+分支使用 $\sum_i\lvert\widehat w_i\rvert=1$ 的归一化。HTML 中的 Equalized Eye Diagram 使用 FFE-only
 波形；FFE+DFE 主要用于 RLM 诊断。
+
+若 $z_{\mathrm{FFE}}[n]$ 是 FFE 输出，$\mathcal Q(\cdot)$ 是 PAM4 slicer，当前实现的反馈
+步骤可写为
+
+$$
+\begin{aligned}
+\widehat a[n]
+  &=\mathcal Q\!\left(z_{\mathrm{FFE}}[n]\right), \\
+z_{\mathrm{FFE+DFE}}[n]
+  &=z_{\mathrm{FFE}}[n]
+    -\sum_{j=1}^{N_{\mathrm{DFE}}}b_j\widehat a[n-j],
+\qquad b_j=\left(\boldsymbol x_p\right)_{D_p+j} .
+\end{aligned}
+$$
 
 ### 5.3 为什么会出现 Singular matrix
 
-正规方程要求 $P_3$ 满列秩。以下情况会导致或放大奇异性：
+正规方程要求 $\mathbf P_3$ 满列秩。以下情况会导致或放大奇异性：
 
 - `total_cursor_ffe > total_cursor_fit`，未知 FFE tap 比可用脉冲约束更多；
 - PRBS、符号率、OSR 或波形同步设置错误，导致拟合脉冲退化；
 - 脉冲窗口太短，重要前后游标落在窗口之外；
-- 通道零点或高度相关的列使 $P_3^TP_3$ 病态。
+- 通道零点或高度相关的列使 $\mathbf P_3^{\mathsf T}\mathbf P_3$ 病态。
 
 程序先强制 `total_cursor_fit >= total_cursor_ffe`，若数据本身仍不足以形成满秩矩阵，
 会报告矩阵秩并要求增大 pulse fit 窗口或减少 FFE tap。这样比伪逆给出一个表面可用但
@@ -230,8 +335,10 @@ $$
 分别求四组均值得到
 
 $$
-V_0<V_1<V_2<V_3.
+V_{-1}<V_{-1/3}<V_{+1/3}<V_{+1} .
 $$
+
+代码字段 `V0`、`V1`、`V2`、`V3` 依次对应这四个均值。
 
 若某一电平没有样本，相应 RLM 为 `n/a`。正式标准测量还要求指定测试码型、滤波器、
 测试点和中心采样方法；这里的分组来自分析侧最佳相位。
@@ -241,14 +348,22 @@ $$
 令三个相邻间距为
 
 $$
-d_0=V_1-V_0,\quad d_1=V_2-V_1,\quad d_2=V_3-V_2.
+\begin{aligned}
+d_{\mathrm L}&=V_{-1/3}-V_{-1}, \\
+d_{\mathrm M}&=V_{+1/3}-V_{-1/3}, \\
+d_{\mathrm U}&=V_{+1}-V_{+1/3} .
+\end{aligned}
 $$
 
-总摆幅为 $V_3-V_0=d_0+d_1+d_2$，理想等间距为总摆幅的 $1/3$，所以最小眼高相对
-理想眼高的比例是
+总摆幅为 $V_{+1}-V_{-1}=d_{\mathrm L}+d_{\mathrm M}+d_{\mathrm U}$，理想等间距为
+总摆幅的 $1/3$，所以最小眼高相对理想眼高的比例是
 
 $$
-\boxed{RLM_{adj}=\frac{3\min(d_0,d_1,d_2)}{V_3-V_0}}.
+\mathrm{RLM}_{\mathrm{adj}}
+=\frac{\min\!\left(d_{\mathrm L},d_{\mathrm M},d_{\mathrm U}\right)}
+       {(V_{+1}-V_{-1})/3}
+=\frac{3\min\!\left(d_{\mathrm L},d_{\mathrm M},d_{\mathrm U}\right)}
+       {V_{+1}-V_{-1}} .
 $$
 
 报告名称为 `RLM (Min Adjacent Spacing)`，内部字段名为 `RLMbj`。这个名称没有把它
@@ -259,42 +374,60 @@ $$
 先用外层电平定义中点：
 
 $$
-V_{mid}=\frac{V_0+V_3}{2}.
+V_{\mathrm{mid}}=\frac{V_{-1}+V_{+1}}{2} .
 $$
 
 再把两个内层电平归一化，使外层对应 $-1$ 与 $+1$：
 
 $$
-ES_1=\frac{V_1-V_{mid}}{V_0-V_{mid}},\qquad
-ES_2=\frac{V_2-V_{mid}}{V_3-V_{mid}}.
+\mathrm{ES}_1
+=\frac{V_{-1/3}-V_{\mathrm{mid}}}{V_{-1}-V_{\mathrm{mid}}},
+\qquad
+\mathrm{ES}_2
+=\frac{V_{+1/3}-V_{\mathrm{mid}}}{V_{+1}-V_{\mathrm{mid}}} .
 $$
 
 IEEE 802.3bs 公开任务组材料和 OIF CEI-05.3 16.C.4.3 给出的定义相同：
 
 $$
-\boxed{RLM=\min(3ES_1,3ES_2,2-3ES_1,2-3ES_2)}.
+\boxed{
+\mathrm{RLM}
+=\min\!\left(
+3\mathrm{ES}_1,\,
+3\mathrm{ES}_2,\,
+2-3\mathrm{ES}_1,\,
+2-3\mathrm{ES}_2
+\right)
+} .
 $$
 
-理想 PAM4 中 $ES_1=ES_2=1/3$，四项都等于 1，因此 $RLM=1$。在通常的
-$0\le ES_i\le2/3$ 范围内，单个内层电平的两项可改写为
+理想 PAM4 中 $\mathrm{ES}_1=\mathrm{ES}_2=1/3$，四项都等于 1，因此
+$\mathrm{RLM}=1$。在通常的 $0\le\mathrm{ES}_i\le2/3$ 范围内，单个内层电平的两项可
+改写为
 
 $$
-\min(3ES_i,2-3ES_i)=1-3\left|ES_i-\frac13\right|.
+\min\!\left(3\mathrm{ES}_i,\,2-3\mathrm{ES}_i\right)
+=1-3\left\lvert\mathrm{ES}_i-\frac{1}{3}\right\rvert .
 $$
 
 所以该公式等价于由两个内层电平中**偏离理想位置最严重的一个**决定 RLM。它既惩罚
-向中间压缩，也惩罚向外偏移，与只看三个相邻间距最小值的 $RLM_{adj}$ 并非同一指标。
+向中间压缩，也惩罚向外偏移，与只看三个相邻间距最小值的
+$\mathrm{RLM}_{\mathrm{adj}}$ 并非同一指标。
 
 ## 7. 协议 SNDR 与工具 SNDR
 
 OIF CEI-05.3 的 CEI-112G PAM4 章节使用
 
 $$
-\boxed{SNDR_{std}=10\log_{10}
-\frac{p_{max}^2}{\sigma_e^2+\sigma_n^2}}.
+\boxed{
+\mathrm{SNDR}_{\mathrm{std}}
+=10\log_{10}\!\left(
+\frac{p_{\max}^{2}}{\sigma_e^2+\sigma_n^2}
+\right)
+}\;\mathrm{dB} .
 $$
 
-$p_{max}$ 是电压幅度，平方后与信号功率成正比；互不相关的拟合误差和随机噪声按方差
+$p_{\max}$ 是电压幅度，平方后与信号功率成正比；互不相关的拟合误差和随机噪声按方差
 相加，因此总损伤功率为 $\sigma_e^2+\sigma_n^2$。功率比使用 $10\log_{10}$，这就得到
 上式；若分母先合成为等效 RMS 幅度，才可以等价地写成 $20\log_{10}$ 的幅度比。
 
@@ -306,10 +439,13 @@ $\sigma_e$ 是线性拟合误差的标准差，$\sigma_n$ 则是在至少 6 个�
 完整测量流程，因此是
 
 $$
-SNDR_{fit}=10\log_{10}\frac{p_{max}^2}{e_{RMS,fit}^2}.
+\mathrm{SNDR}_{\mathrm{fit}}
+=10\log_{10}\!\left(
+\frac{p_{\max}^{2}}{e_{\mathrm{RMS,fit}}^{2}}
+\right)\;\mathrm{dB} .
 $$
 
-只有在 $\sigma_n=0$ 且 $e_{RMS,fit}=\sigma_e$ 的假设下，两式才代数等价。因此报告不
+只有在 $\sigma_n=0$ 且 $e_{\mathrm{RMS,fit}}=\sigma_e$ 的假设下，两式才代数等价。因此报告不
 套用协议 SNDR 限值。CLI 还会输出 `SNDR ffe` 和 `SNDR ffe_and_dfe`：它们是在每个
 采样相位上完成均衡、硬判决后，以“判决符号 RMS / 判决误差 RMS”计算并选择最佳相位的
 constellation 指标。分子、分母、滤波和判决均不同，不能与 `SNDR (Fit)` 横向比较；
@@ -317,22 +453,44 @@ constellation 指标。分子、分母、滤波和判决均不同，不能与 `S
 
 ## 8. 测量派生传递函数
 
-程序构造一个幅度为 $\max|p(k)|$、持续 1 UI、上升下降时间为 1 fs 的理想梯形脉冲
-$p_{ideal}(k)$，定义
+程序构造一个幅度为 $\max_k\lvert p[k]\rvert$、持续 1 UI、上升下降时间为 1 fs 的理想梯形脉冲
+$p_{\mathrm{ideal}}[k]$。令 $\mathcal F_{\mathrm d}\{\cdot\}$ 表示离散 Fourier 变换，先计算原始
+幅频比，再归一化直流增益：
 
 $$
-H(f)=\frac{|FFT\{p(k)\}|}{|FFT\{p_{ideal}(k)\}|},\qquad H(0)=1.
+\begin{aligned}
+P(f)
+  &=\mathcal F_{\mathrm d}\!\left\{p[k]\right\}, \\
+P_{\mathrm{ideal}}(f)
+  &=\mathcal F_{\mathrm d}\!\left\{p_{\mathrm{ideal}}[k]\right\}, \\
+\widetilde H(f)
+  &=\frac{\lvert P(f)\rvert}{\lvert P_{\mathrm{ideal}}(f)\rvert}, \\
+H(f)
+  &=\frac{\widetilde H(f)}{\widetilde H(0)},
+  \qquad H(0)=1 .
+\end{aligned}
 $$
 
 理想脉冲频谱的零点会导致除零，程序先保留非零频点，再线性插值平滑分母。报告中的
 Nyquist 值为
 
 $$
-H_{Nq,dB}=20\log_{10}|H(R_s/2)|,
+H_{\mathrm{Nq}}^{(\mathrm{dB})}
+=20\log_{10}\!\left\lvert H\!\left(\frac{R_s}{2}\right)\right\rvert
+\;\mathrm{dB} .
 $$
 
-`BW 3dB` 是 $20\log_{10}|H(f)|$ 首次低于 -3 dB 的插值交点。这里的 $H(f)$ 同时包含
-发送端、采集链路和有限拟合窗口的影响；它不是混合模 S 参数 $S_{DD21}$，不能替代协议
+`BW 3dB` 是幅频响应第一次穿越 $-3\;\mathrm{dB}$ 的插值频点：
+
+$$
+f_{3\mathrm{dB}}
+=\inf\!\left\{
+f>0:\;20\log_{10}\lvert H(f)\rvert\le-3
+\right\} .
+$$
+
+这里的 $H(f)$ 同时包含
+发送端、采集链路和有限拟合窗口的影响；它不是混合模 S 参数 $S_{\mathrm{DD21}}$，不能替代协议
 的 channel insertion loss。数值为正时表示相对 DC 有高频提升，不应称为正的“损耗”。
 
 ## 9. 眼宽算法
@@ -342,22 +500,45 @@ $$
 **Central 99% eye width** 是主指标。程序在相邻样本异号时用线性插值求零交叉相位：
 
 $$
-\phi_i=\left(k-\frac{y_k}{y_{k+1}-y_k}\right)\bmod M.
+\phi_i
+=\operatorname{mod}\!\left(
+k-\frac{y[k]}{y[k+1]-y[k]},\;M
+\right) .
 $$
 
-用圆均值求 crossing 相位中心，把相位展开到 $[-M/2,M/2)$，取 0.5% 与 99.5% 分位点
-$q_{0.005},q_{0.995}$，得到
+用圆均值 $\bar\phi$ 求 crossing 相位中心，再将每个相位展开到 $[-M/2,M/2)$：
 
 $$
-\boxed{W_{99}=1-\frac{q_{0.995}-q_{0.005}}{M}}\quad\text{UI}.
+\begin{aligned}
+\bar\phi
+  &=\frac{M}{2\pi}\arg\!\left(
+    \sum_i\exp\!\left(\mathrm{j}\frac{2\pi\phi_i}{M}\right)
+    \right), \\
+\delta_i
+  &=\operatorname{mod}\!\left(\phi_i-\bar\phi+\frac{M}{2},\;M\right)
+    -\frac{M}{2} .
+\end{aligned}
 $$
 
-最后将结果裁剪到 $[0,1]$。PAM4 下这测量的是跨越零阈值的中间眼，不是三个眼分别的
-协议眼宽。换算到时间为
+令 $Q_{\alpha}(\{\delta_i\})$ 表示展开后相位的 $\alpha$ 分位点，则中央 99% crossing
+跨度及剩余眼宽为
 
 $$
-W_{ps}=W_{UI}\frac{10^{12}}{R_s}.
+\begin{aligned}
+\Delta_{99}
+  &=Q_{0.995}(\{\delta_i\})-Q_{0.005}(\{\delta_i\}), \\
+W_{99}
+  &=\min\!\left\{1,\max\!\left[0,1-\frac{\Delta_{99}}{M}\right]\right\}
+    \;\mathrm{UI}, \\
+T_{99}
+  &=W_{99}T_{\mathrm{UI}}
+   =\frac{W_{99}}{R_s}, \\
+T_{99}^{(\mathrm{ps})}
+  &=\frac{10^{12}W_{99}}{R_s} .
+\end{aligned}
 $$
+
+PAM4 下这测量的是跨越零阈值的中间眼，不是三个眼分别的协议眼宽。
 
 例如 53.125 GBd 时 1 UI 约为 18.824 ps，4 ps 约为 0.2125 UI。
 
@@ -511,8 +692,14 @@ Data,<SPACE>
 - 优先使用带时间轴的原始数据与自动 OSR。若报告的 native/effective samples/UI 不一致，
   先核对符号率、时间单位、丢点和采集导出格式。
 - `pre_cursor_fit` 应覆盖可见前游标，`total_cursor_fit` 应覆盖主要 pulse tail。
-- 必须满足 `pre_cursor_fit + dfe_tap_num < total_cursor_fit`、
-  `pre_cursor_ffe < total_cursor_ffe` 和 `total_cursor_fit >= total_cursor_ffe`。
+- 拟合窗口、FFE 和 DFE 参数必须满足下式：
+
+$$
+0\le D_p,\qquad
+D_p+N_{\mathrm{DFE}}<N_p,\qquad
+0\le D_w<N_w\le N_p .
+$$
+
 - 增加 FFE tap 并不总会改善结果。过长的无约束逆滤波器可能用很大正负系数追逐噪声。
 - 要复现协议条款时，先按目标接口设置 $N_p,D_p$ 和采集滤波器，再谈限值；不要从
   GUI 默认值反推标准配置。
@@ -539,9 +726,9 @@ Data,<SPACE>
 1. [IEEE Std 802.3-2022, IEEE Standard for Ethernet](https://standards.ieee.org/ieee/802.3/10422/)，
    当前基础标准页面与修订入口。
 2. [IEEE P802.3bs: PAM4 transmitter linearity / RLM change material](https://www.ieee802.org/3/bs/public/16_03/healey_3bs_02_0316.pdf)，
-   给出 $V_{mid}$、$ES_1$、$ES_2$ 与 RLM 公式的公开任务组材料。
+   给出 $V_{\mathrm{mid}}$、$\mathrm{ES}_1$、$\mathrm{ES}_2$ 与 RLM 公式的公开任务组材料。
 3. [IEEE P802.3ck: transmitter SNDR background](https://www.ieee802.org/3/ck/public/adhoc/oct02_19/diminico_3ck_adhoc_100219.pdf)，
-   展示 $p_{max}$、$\sigma_e$、$\sigma_n$ 的 SNDR 结构；任务组材料不是标准正文。
+   展示 $p_{\max}$、$\sigma_e$、$\sigma_n$ 的 SNDR 结构；任务组材料不是标准正文。
 4. [OIF Implementation Agreements](https://www.oiforum.com/technical-work/implementation-agreements-ias/)，
    OIF 发布版本索引。
 5. [OIF-CEI-05.3 Common Electrical I/O](https://www.oiforum.com/wp-content/uploads/OIF-CEI-05.3.pdf)，
