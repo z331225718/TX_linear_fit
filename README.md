@@ -7,6 +7,9 @@
 报告支持 `neutral`、`ieee8023` 和 `oif` 语义标签，但不自动加入协议限值，
 也不替代正式的一致性测试。
 
+算法、公式推导、协议边界和完整操作说明见
+[《TX Linear Fit 技术原理与使用指南》](docs/TECHNICAL_GUIDE.md)。
+
 ## 环境
 
 - Python 3.10+
