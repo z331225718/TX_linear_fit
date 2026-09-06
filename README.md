@@ -161,7 +161,6 @@ python_src/
   calc_rlm.py               RLM 计算
   plots.py                  绘图
   report.py                 HTML 报告
-  matlab_compat.py          数值语义兼容助手
   requirements.txt          Python 依赖
   tests/                    自包含回归测试
 ```
