@@ -1,0 +1,223 @@
+<section class="slide" data-sec="第5章 指标与图形">
+  <div class="body divider">
+    <div class="big">05</div>
+    <h2>指标与图形</h2>
+    <ul>
+      <li>星座 SNDR 与「最佳相位」</li>
+      <li>RLM 的两种定义、协议 SNDR 与工具 SNDR 的差别</li>
+      <li>测量派生传递函数、眼宽算法、输出清单</li>
+    </ul>
+  </div>
+  <div class="sec">第 5 章 · 指标与图形</div>
+  <div class="num">30</div>
+</section>
+
+<section class="slide" data-sec="第5章 指标与图形">
+  <div class="body">
+    <div class="kicker">星座 SNDR</div>
+    <h2>逐相位均衡，再挑最好的那个相位</h2>
+    <div class="two-6-4">
+      <div>
+        <ol class="steps">
+          <li>对每个相位 <span class="kbd">zz = 1…M</span>，从波形里抽取 <span class="kbd">y[zz−1::M]</span>（每 UI 取 1 点）；</li>
+          <li>用 FFE 系数滤波该序列，并<strong>去掉均值</strong>；</li>
+          <li>用阈值 slicer 得到硬判决（PAM4：±1/3、±1 四电平）；</li>
+          <li>若启用 DFE，按历史判决减去反馈量；</li>
+          <li>计算该相位的 <span class="kbd">SNDR = 20log₁₀( rms(判决) / rms(滤波 − 判决) )</span>；</li>
+          <li>取 <strong>SNDR 最大</strong>的相位作为「最佳相位」，保存它的星座与波形。</li>
+        </ol>
+        <div class="eli5"><span class="lbl">人话</span><p>采样点落在 UI 里哪一个位置最「正中」，眼睛就张得最开。程序把每个可能位置都试一遍，挑最好的那个报告。</p></div>
+      </div>
+      <div>
+        <div class="imgbox"><img src="{{IMG_CONST}}" alt="星座直方图"></div>
+        <figcaption>均衡前 / 均衡后星座直方图（越集中越好）</figcaption>
+        <div class="code" style="margin-top:10px;max-height:120px"><span class="cmt"># 代码落点</span>
+<b>pulse_response_tool.py</b>
+  calc_constellation_sndr_f()
+  constellation_sndr_helper_f()</div>
+      </div>
+    </div>
+  </div>
+  <div class="sec">第 5 章 · 指标与图形</div>
+  <div class="num">31</div>
+</section>
+
+<section class="slide" data-sec="第5章 指标与图形">
+  <div class="body">
+    <div class="kicker">眼图重建</div>
+    <h2>把 M 个相位重新交织成一张眼图</h2>
+    <div class="two-6-4">
+      <div>
+        <p>逐相位滤波产生 <span class="kbd">M</span> 条序列；把它们放回原始采样顺序，就得到「均衡后」的连续波形，用于画眼图：</p>
+        <div class="formula">矩阵 A 形状 (L_max × M)：
+  A[:, zz] = 第 zz 个相位的均衡输出
+
+按<em>行优先</em>展开回一维：
+  re_interleaved[(i)·M + zz] = A[i, zz]</div>
+        <div class="warn"><span class="lbl">移植时最容易错的一行</span><p>这一步在 MATLAB 参考实现里是<strong>行主序</strong>平铺（<span class="kbd">(zz−1)*cols + kk</span> 且 zz 为行号）。若按列主序拼装，眼图与眼宽指标会整体错位 —— 本项目正是靠 golden 对比才发现并修正的。</p></div>
+      </div>
+      <div>
+        <div class="imgbox"><img src="{{IMG_EYE_EQ}}" alt="均衡后眼图"></div>
+        <figcaption>Equalized Eye Diagram（FFE-only 重建波形）</figcaption>
+      </div>
+    </div>
+  </div>
+  <div class="sec">第 5 章 · 指标与图形</div>
+  <div class="num">32</div>
+</section>
+
+<section class="slide" data-sec="第5章 指标与图形">
+  <div class="body">
+    <div class="kicker">RLM</div>
+    <h2>台阶均匀不均匀：两种 RLM 定义</h2>
+    <div class="two">
+      <div>
+        <h3>① 最小相邻间距 RLM_adj（字段 RLMbj）</h3>
+        <div class="formula" style="font-size:16.5px">阈值 −2/3, 0, +2/3 → 四组均值 V0…V3
+
+d_L = V1 − V0      d_M = V2 − V1      d_U = V3 − V2
+
+            3 · min(d_L, d_M, d_U)
+RLM_adj = ─────────────────────────
+                V3 − V0</div>
+        <p style="margin-top:8px">报告名 <span class="kbd">RLM (Min Adjacent Spacing)</span>；名字没有伪装成当前 IEEE 定义。</p>
+      </div>
+      <div>
+        <h3>② IEEE 802.3bs / OIF CEI 定义（字段 RLMbs）</h3>
+        <div class="formula" style="font-size:16.5px">V_mid = ( V0 + V3 ) / 2
+
+ES1 = ( V1 − V_mid ) / ( V0 − V_mid )
+ES2 = ( V2 − V_mid ) / ( V3 − V_mid )
+
+RLM = min( 3·ES1, 3·ES2, 2−3·ES1, 2−3·ES2 )</div>
+        <p style="margin-top:8px">理想 PAM4 中 <span class="kbd">ES1 = ES2 = 1/3</span>，四项都是 1 ⇒ RLM = 1。</p>
+      </div>
+    </div>
+    <div class="eli5"><span class="lbl">一条有用的洞见</span><p>在通常的 <span class="kbd">0 ≤ ES ≤ 2/3</span> 区间里，<span class="kbd">min(3ES, 2−3ES) = 1 − 3|ES − 1/3|</span>。所以 IEEE 公式等价于「<em>两个内层电平里，偏离理想位置最严重的那个</em>决定 RLM」—— 向中间压缩和向外偏移都罚。这与只看三个相邻间距最小值的 RLM_adj 并不是同一个指标。</p></div>
+    <p>若某一电平没有样本，相应 RLM 记 <span class="kbd">n/a</span>（例如 NRZ 或星座严重退化时），不编数。</p>
+  </div>
+  <div class="sec">第 5 章 · 指标与图形</div>
+  <div class="num">33</div>
+</section>
+
+<section class="slide" data-sec="第5章 指标与图形">
+  <div class="body">
+    <div class="kicker">SNDR</div>
+    <h2>协议 SNDR 与工具 SNDR：一字之差</h2>
+    <div class="two">
+      <div class="card"><h3>标准（OIF CEI-05.3 等）</h3>
+        <div class="formula" style="font-size:17px;padding:12px 14px">                      p_max²
+SNDR_std[dB] = 10 log₁₀ ──────────
+                     σ_e² + σ_n²</div>
+        <ul style="margin-top:8px">
+          <li><span class="kbd">σ_e</span>：线性拟合误差的标准差；</li>
+          <li><span class="kbd">σ_n</span>：在规定条件下（如 ≥6 个相同符号连续区间、固定相位）单独测得的噪声；</li>
+          <li>功率相加 ⇒ 用 <strong>10 log₁₀</strong>。</li>
+        </ul>
+      </div>
+      <div class="card"><h3>本工具</h3>
+        <div class="formula" style="font-size:17px;padding:12px 14px">                      p_max²
+SNDR_fit[dB] = 10 log₁₀ ───────────
+                     e_RMS,fit²</div>
+        <ul style="margin-top:8px">
+          <li>不单独测 <span class="kbd">σ_n</span>；</li>
+          <li>用中央 80% 残差 RMS 代替完整测量流程；</li>
+          <li>只有 <span class="kbd">σ_n = 0</span> 且 <span class="kbd">e_RMS,fit = σ_e</span> 时两式才等价。</li>
+        </ul>
+      </div>
+    </div>
+    <div class="warn"><span class="lbl">汇报时请注意</span><p>报告<strong>不套用协议 SNDR 限值</strong>。CLI 另输出的 <span class="kbd">SNDR ffe</span> / <span class="kbd">SNDR ffe_and_dfe</span> 是均衡后判决域指标（分子/分母/滤波/判决都不同），<strong>不能</strong>与 <span class="kbd">SNDR (Fit)</span> 横向比较；为避免误读，这两个值不出现在 HTML 报告里。</p></div>
+  </div>
+  <div class="sec">第 5 章 · 指标与图形</div>
+  <div class="num">34</div>
+</section>
+
+<section class="slide" data-sec="第5章 指标与图形">
+  <div class="body">
+    <div class="kicker">频域</div>
+    <h2>测量派生传递函数：从脉冲反推频响</h2>
+    <div class="two-6-4">
+      <div>
+        <div class="formula">① 造理想脉冲 p_ideal：幅度 max|p|、宽 1 UI、
+   上升/下降时间 1 fs（数值上近似理想方波）
+
+② P(f)       = DFT{ p[k] }
+   P_ideal(f) = DFT{ p_ideal[k] }
+
+③ H̃(f) = |P(f)| / |P_ideal(f)|
+   H(f)  = H̃(f) / H̃(0),   H(0) = 1
+
+④ Nyquist : H_Nq[dB] = 20 log₁₀ |H(R_s/2)|
+⑤ BW 3dB  : 第一个满足 20log₁₀|H(f)| ≤ −3 的频点</div>
+        <p style="margin-top:8px">理想脉冲频谱的零点会让分母趋零，程序<strong>先剔除近零频点再线性插值</strong>补回分母。</p>
+      </div>
+      <div>
+        <div class="imgbox"><img src="{{IMG_TF}}" alt="传递函数"></div>
+        <figcaption>测量派生传递函数（注意高频段的起伏来自有限窗口与残余 ISI）</figcaption>
+      </div>
+    </div>
+    <div class="warn"><span class="lbl">别叫它插损</span><p><span class="kbd">H(f)</span> 同时包含发送端、采集链路与<strong>有限拟合窗口</strong>的影响，<strong>不是</strong>混合模 S 参数 <span class="kbd">S_DD21</span>，不能替代协议规定的通道插入损耗。数值为正表示相对 DC 有高频提升（boost），不应称为「正的损耗」。</p></div>
+  </div>
+  <div class="sec">第 5 章 · 指标与图形</div>
+  <div class="num">35</div>
+</section>
+
+<section class="slide" data-sec="第5章 指标与图形">
+  <div class="body">
+    <div class="kicker">眼宽</div>
+    <h2>95% 与 99% 眼宽：为什么不能只数过零点</h2>
+    <div class="two-6-4">
+      <div>
+        <div class="formula">① 相邻样本异号时线性插值求过零相位：
+   φ[i] = mod( k − y[k] / (y[k+1] − y[k]), M )
+
+② 圆均值求 crossing 中心：
+   φ_mean = [M/2π]·arg{ Σ exp( j·2π·φ[i]/M ) }
+
+③ 展开到 [−M/2, M/2)：
+   δ[i] = mod( φ[i] − φ_mean + M/2, M ) − M/2
+
+④ 取分位点（默认中央 99%）：
+   Δ = Q_0.995{δ} − Q_0.005{δ}
+   W = clip( 1 − Δ/M, 0, 1 )   [UI]</div>
+        <p style="margin-top:8px">53.125 GBd 时 1 UI ≈ 18.824 ps；4 ps ≈ 0.2125 UI。</p>
+      </div>
+      <div>
+        <div class="imgbox"><img src="{{IMG_EYE_UNEQ}}" alt="未均衡眼图"></div>
+        <figcaption>Unequalized Eye Diagram（含眼宽/眼高标注）</figcaption>
+      </div>
+    </div>
+    <div class="eli5"><span class="lbl">人话</span><p>如果只找「最窄的那一秒」，那么成千上万个 UI 里只要有<em>一次</em>抖动毛刺，眼宽就会塌成 0。<strong>中央 99%</strong> 的意思是：把最外侧各 0.5% 的过零点当离群点排除，剩下的跨度才算眼宽。</p></div>
+  </div>
+  <div class="sec">第 5 章 · 指标与图形</div>
+  <div class="num">36</div>
+</section>
+
+<section class="slide" data-sec="第5章 指标与图形">
+  <div class="body">
+    <div class="kicker">输出</div>
+    <h2>一次运行产出什么</h2>
+    <div class="two-6-4">
+      <div>
+        <ul>
+          <li><span class="kbd">tx_linear_fit_report.html</span> —— 图片已内嵌，可独立移动/打开；</li>
+          <li><span class="kbd">results/*.png</span> —— 拟合误差、拟合脉冲、星座、两个眼图、FFE 系数与频响、传递函数、汇总拼图；</li>
+          <li><span class="kbd">txcross.csv</span> / <span class="kbd">txhist.csv</span> —— 眼图过零统计（原始数据，便于二次分析）；</li>
+          <li>控制台指标摘要（含 alignment_shift、RLM、SNDR、Nyquist 等）。</li>
+        </ul>
+        <div class="code" style="margin-top:10px;max-height:150px"><span class="cmt"># 常用控制项</span>
+--no-open      生成报告但不打开浏览器
+--no-report    不生成 HTML
+--plots 0      不渲染 PNG
+--report PATH  指定报告名或路径
+--profile neutral|ieee8023|oif   仅语义标签</div>
+      </div>
+      <div>
+        <div class="imgbox"><img src="{{IMG_SUMMARY}}" alt="汇总拼图"></div>
+        <figcaption>tx_summary.png：8 张分析图拼成的速览页</figcaption>
+      </div>
+    </div>
+  </div>
+  <div class="sec">第 5 章 · 指标与图形</div>
+  <div class="num">37</div>
+</section>

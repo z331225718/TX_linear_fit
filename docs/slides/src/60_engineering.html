@@ -1,0 +1,140 @@
+<section class="slide" data-sec="第6章 数值保真">
+  <div class="body divider">
+    <div class="big">06</div>
+    <h2>数值保真与验证</h2>
+    <ul>
+      <li>为什么要和参考实现「逐项对齐」</li>
+      <li>两个高频陷阱集：矩阵/索引 与 函数语义</li>
+      <li>6 处<em>刻意</em>偏差，以及调试清单</li>
+    </ul>
+  </div>
+  <div class="sec">第 6 章 · 数值保真</div>
+  <div class="num">38</div>
+</section>
+
+<section class="slide" data-sec="第6章 数值保真">
+  <div class="body">
+    <div class="kicker">方法论</div>
+    <h2>golden 对比：把「重写」变成「可验证的等价」</h2>
+    <div class="two-6-4">
+      <div>
+        <ol class="steps">
+          <li>用<strong>同一份波形文件</strong>跑参考实现（MATLAB），导出全量数值为 JSON（golden）；</li>
+          <li>Python 侧跑同样配置，逐字段比对：标量、向量、矩阵、NaN 位置；</li>
+          <li>判据：相对误差 <span class="kbd">≤ 1e-9</span>（<span class="kbd">fit_results.e</span> 这类残差向量放宽到 1e-8，因 P·X−Y 相消放大了相对误差，绝对误差仍 ~2e-10 V）；</li>
+          <li>把<strong>刻意</strong>不同之处登记为 known deviation，而不是偷偷放宽容差。</li>
+        </ol>
+        <div class="eli5"><span class="lbl">人话</span><p>重写算法最怕「看起来对」。golden 对比就是拿原版当标尺，一个字段一个字段地量 —— 差 1e-9 也要说清楚为什么。</p></div>
+      </div>
+      <div>
+        <div class="card"><h3>覆盖范围</h3><ul>
+          <li>PRBS/电平映射序列（逐比特）</li>
+          <li>解析结果（time/voltage 全量）</li>
+          <li>拟合全字段：p、e、l、P3、firNum、DFE 权重、v_f、p_max、SNDR、SNR_ISI…</li>
+          <li>星座 SNDR、RLM（ffe 与 ffe+DFE 两条链）</li>
+          <li>传递函数、眼图指标、中间流向量</li>
+        </ul></div>
+        <div class="warn" style="margin-top:12px"><span class="lbl">三种失败都要报</span><p>数值超差、形状不一致、NaN 位置不一致 —— 三者都算失败，不允许「差不多」。</p></div>
+      </div>
+    </div>
+  </div>
+  <div class="sec">第 6 章 · 数值保真</div>
+  <div class="num">39</div>
+</section>
+
+<section class="slide" data-sec="第6章 数值保真">
+  <div class="body">
+    <div class="kicker">陷阱 I</div>
+    <h2>矩阵与索引：三处最容易翻车的地方</h2>
+    <div class="three">
+      <div class="card"><h3>① 列优先 reshape</h3>
+        <p>MATLAB 的 <span class="kbd">reshape</span> 按<strong>列</strong>展开。Python 必须显式写 <span class="kbd">order='F'</span>，否则相位与符号整体错位。</p>
+        <div class="code" style="font-size:13px;padding:10px">Y = d[:M*N].reshape(M, N, order='F')
+e = E.reshape(-1, order='F')</div>
+      </div>
+      <div class="card"><h3>② 1-based ⇒ 0-based</h3>
+        <p>所有区间端点都要换算。典型：插值区间 <span class="kbd">db(idx−1:idx)</span>、掩码 <span class="kbd">P3(a:b, i)</span>、采样起点 <span class="kbd">p(initialSample:M:end)</span>。</p>
+        <p><em>坑</em>：区间长度为 1 时，多减一次就静默取到相邻区间。</p>
+      </div>
+      <div class="card"><h3>③ 循环移位方向</h3>
+        <p><span class="kbd">circshift(x, k)</span> 正 k 向<strong>后</strong>移，对应 <span class="kbd">np.roll(x, k)</span>；但用作<strong>延迟量</strong>时符号容易写反（<span class="kbd">roll(x, −lag)</span>）。</p>
+        <p><em>验证手段</em>：对齐后的 <span class="kbd">stream_decision_upsampled</span> 是全量导出的，可直接比对。</p>
+      </div>
+    </div>
+    <div class="warn"><span class="lbl">一句话记忆</span><p>凡是「从矩阵回到一维」的地方，先问自己：这是<strong>列优先还是行优先</strong>？本项目里 <span class="kbd">p/e/l</span> 是列优先，而眼图 <span class="kbd">re_interleaved</span> 恰恰是<strong>行优先</strong>。</p></div>
+  </div>
+  <div class="sec">第 6 章 · 数值保真</div>
+  <div class="num">40</div>
+</section>
+
+<section class="slide" data-sec="第6章 数值保真">
+  <div class="body">
+    <div class="kicker">陷阱 II</div>
+    <h2>函数语义：魔鬼在细节里</h2>
+    <table>
+      <tr><th style="width:24%">行为</th><th style="width:38%">MATLAB</th><th>Python / 处理方式</th></tr>
+      <tr><td class="mono">colon 计数</td><td class="mono">0:dt:tend 逐元素 k·dt，保留 fl(k·dt) ≤ stop 的最大 k</td><td>朴素 <span class="kbd">arange</span> 会少一个点（实例：524223 vs 524224），需按同一判据定长</td></tr>
+      <tr><td class="mono">freqz 网格</td><td class="mono">512 点，w = (0:n−1)·π/n，<strong>不含</strong> π</td><td>要与该网格一致，否则 Nyquist 类指标偏移</td></tr>
+      <tr><td class="mono">min / max 遇 NaN</td><td class="mono">默认<strong>忽略</strong> NaN（返回非 NaN 的最小值）</td><td><span class="kbd">np.min</span> 会传播 NaN ⇒ 需 <span class="kbd">nanmin</span>，否则 RLM 变 NaN</td></tr>
+      <tr><td class="mono">logical 相加</td><td class="mono">true+true = 2（转 double 计数）</td><td>numpy 布尔 <span class="kbd">+</span> 是 <strong>OR</strong> ⇒ 判决求和必须 <span class="kbd">astype(float)</span></td></tr>
+      <tr><td class="mono">csvwrite</td><td class="mono">约 5 位有效数字</td><td>整数统计量无影响；非整数需注意精度损失</td></tr>
+      <tr><td class="mono">xcorr 长度</td><td class="mono">默认 maxlag = max(len)−1，输出 2N−1，短序列补零</td><td>需按 pad-to-N 约定实现，否则同步滞后量错位</td></tr>
+    </table>
+    <div class="code" style="margin-top:12px;max-height:96px"><span class="cmt"># 这些语义集中封装在一处，便于审计</span>
+<b>matlab_compat.py</b>  colon() / xcorr() / interp1_linear() / interp1_spline() / filter_fir() / freqz() / rms() / matlab_round()</div>
+  </div>
+  <div class="sec">第 6 章 · 数值保真</div>
+  <div class="num">41</div>
+</section>
+
+<section class="slide" data-sec="第6章 数值保真">
+  <div class="body">
+    <div class="kicker">诚实的差异</div>
+    <h2>6 处「刻意不同」：登记而不是掩盖</h2>
+    <div class="two">
+      <div>
+        <h3>A. 频率轴 off-by-one 修复（4 项）</h3>
+        <div class="warn"><span class="lbl">参考实现的缺陷</span><p>MATLAB 侧用 <span class="kbd">freq = [1:N]/N·Fs</span>（1-based）去配 FFT 的 bin，导致<strong>整条频率轴偏一个 bin</strong>：<span class="kbd">freq(1)</span> 报 6.64 GHz，而该 bin 实际是 DC。</p></div>
+        <p>Python 侧改为 <span class="kbd">freq = [0:N−1]/N·Fs</span>（<span class="kbd">freq[0] = 0 Hz</span>）。因此这 4 个字段不同：</p>
+        <ul>
+          <li><span class="kbd">tf_calc.freq</span>（轴本身）</li>
+          <li><span class="kbd">tf_calc.nyquist_loss</span>（现在取到真正的 R_s/2）</li>
+          <li><span class="kbd">tf_calc.bw_3dB</span>（在正确轴上插值）</li>
+          <li><span class="kbd">tf_calc.idx_3dB</span>（索引含义与 0-based 轴一致）</li>
+        </ul>
+      </div>
+      <div>
+        <h3>B. 删除两个语义模糊的指标（2 项）</h3>
+        <ul>
+          <li><span class="kbd">fit_results.nyquist_loss</span> —— 8-tap 符号率「等效」损耗，与协议插损的定义不一致，容易误读；</li>
+          <li><span class="kbd">fit_results.nyquist_loss_inner</span> —— 同上。</li>
+        </ul>
+        <p>协议关心的插损改由连续域 <span class="kbd">tf_calc.nyquist_loss</span> 表达。</p>
+        <div class="card" style="margin-top:10px"><h3>怎么读验证结果</h3><p><span class="kbd">verification/compare_summary_*.json</span> 中：<span class="kbd">failures = 0</span>，同时列出 <span class="kbd">known_deviations</span>。被登记的项目在报告里标 <strong>KNOWN-DEVIATION</strong>，既不放宽阈值，也不假装一致。</p></div>
+        <div class="chips"><span class="chip acc">配置 A：90 项</span><span class="chip acc">配置 B：70 项</span><span class="chip warn">失败 0</span></div>
+      </div>
+    </div>
+  </div>
+  <div class="sec">第 6 章 · 数值保真</div>
+  <div class="num">42</div>
+</section>
+
+<section class="slide" data-sec="第6章 数值保真">
+  <div class="body">
+    <div class="kicker">排障</div>
+    <h2>症状 → 原因 → 处置</h2>
+    <table>
+      <tr><th style="width:26%">症状</th><th style="width:38%">最可能原因</th><th>处置</th></tr>
+      <tr><td>报错：无法从时间轴推断整数 osr</td><td>符号率填错 / 时间单位错 / 导出丢点</td><td>核对 R_s 与单位；必要时手动 <span class="kbd">--osr</span> 并明确是重采样</td></tr>
+      <tr><td>拟合脉冲几乎全零或极噪</td><td>同步失败：码型/长度/OSR 不匹配</td><td>核对调制、PRBS 类型、pattern_length；确认波形确为该码型</td></tr>
+      <tr><td>对齐报错：找不到正确对齐</td><td>符号率偏差、极性异常、记录太短</td><td>检查 <span class="kbd">alignment_shift</span> 与相关峰；加长记录或核对 R_s</td></tr>
+      <tr><td>FFE 系数巨大（远大于 1）</td><td>逆滤波追逐噪声 / 窗口不足</td><td>缩短 FFE、加长 pulse fit 窗口、检查通道深衰减</td></tr>
+      <tr><td>Singular matrix</td><td><span class="kbd">N_w &gt; N_p</span> 或脉冲退化</td><td>满足约束 <span class="kbd">D_w &lt; N_w ≤ N_p</span>；先修同步再谈 tap 数</td></tr>
+      <tr><td>RLM 为 n/a 或 NaN</td><td>某电平区间没有样本（星座退化）</td><td>先看眼图与星座分布；确认 slicer 阈值与调制类型匹配</td></tr>
+      <tr><td>SNR_ISI 为 NaN</td><td>脉冲窗口太短（<span class="kbd">i_peak+11 &gt; N_p</span>）</td><td>增大 <span class="kbd">total_cursor_fit</span></td></tr>
+      <tr><td>两次运行指标不可比</td><td>码型/符号率/OSR/窗口/tap 数不同</td><td>固定全部参数，只改一个变量做敏感性分析</td></tr>
+    </table>
+  </div>
+  <div class="sec">第 6 章 · 数值保真</div>
+  <div class="num">43</div>
+</section>

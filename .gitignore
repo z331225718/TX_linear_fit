@@ -51,6 +51,9 @@ dist/
 /.tmp/
 /.workbuddy/
 
+# Slide deck build leftovers
+docs/slides/_nav_check.js
+
 # Editor and OS files
 .vscode/
 .idea/

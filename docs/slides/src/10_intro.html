@@ -1,0 +1,213 @@
+<section class="slide" data-sec="导览">
+  <div class="body title-slide">
+    <div class="kicker">内部培训 · SerDes 发送端测量</div>
+    <h1>TX Linear Fit 算法全解</h1>
+    <div class="sub">从一条示波器波形，到线性拟合脉冲、FFE/DFE 抽头、RLM、SNDR、传递函数与眼图 —— 一个工具背后的完整数学与工程实践。</div>
+    <div class="meta">
+      <span><b>代码</b> python_src/</span>
+      <span><b>技术文档</b> docs/TECHNICAL_GUIDE.md</span>
+      <span><b>验证</b> MATLAB golden 92/92 + 72/72</span>
+    </div>
+  </div>
+  <div class="sec">TX Linear Fit · 培训教材</div>
+  <div class="num">1</div>
+</section>
+
+<section class="slide" data-sec="导览">
+  <div class="body">
+    <div class="kicker">导览</div>
+    <h2>这份材料怎么用</h2>
+    <div class="two">
+      <div>
+        <div class="eli5"><span class="lbl">一句话</span><p>每一页都按「人话 → 原理 → 代码落点」三层写：先让你能跟同事讲明白，再让你能改代码。</p></div>
+        <h3>三层结构</h3>
+        <ul>
+          <li><strong>人话</strong>（绿色框）：30 秒能复述的类比，不含公式。</li>
+          <li><strong>原理</strong>：公式、矩阵形状、流程图，对应标准/文档里的定义。</li>
+          <li><strong>代码落点</strong>（深色框）：改哪个文件、哪个函数。</li>
+        </ul>
+      </div>
+      <div>
+        <h3>受众假设</h3>
+        <p>刚接触发送端测量的工程师（0–2 年），以及要给团队做内训的资深工程师。默认你懂「眼图」「UI」「PAM4 电平」这些词，但没推导过最小二乘。</p>
+        <div class="warn"><span class="lbl">需要别的版本？</span><p>如果听众是纯管理/完全非技术（例如给老板或家人讲），告诉我，可生成纯类比版；如果是 DSP 专家，可生成只留推导的精简版。</p></div>
+        <h3>操作</h3>
+        <p><span class="kbd">←</span> <span class="kbd">→</span> 翻页 · <span class="kbd">O</span> 目录 · <span class="kbd">F</span> 全屏 · <span class="kbd">Ctrl+P</span> 导出 PDF</p>
+      </div>
+    </div>
+  </div>
+  <div class="sec">导览</div>
+  <div class="num">2</div>
+</section>
+
+<section class="slide" data-sec="导览">
+  <div class="body">
+    <div class="kicker">全景</div>
+    <h2>一条波形进来，六件事发生</h2>
+    <svg viewBox="0 0 1160 300" width="100%" height="300" role="img" aria-label="处理流水线">
+      <defs>
+        <marker id="ar" markerWidth="10" markerHeight="8" refX="9" refY="4" orient="auto"><path d="M0,0 L10,4 L0,8 z" fill="#5b7292"/></marker>
+      </defs>
+      <g font-family="Segoe UI, sans-serif" font-size="14" fill="#e8eefb">
+        <rect x="10" y="108" width="150" height="74" rx="12" fill="#16233c" stroke="#38bdf8" stroke-opacity=".55"/>
+        <text x="85" y="140" text-anchor="middle" font-size="15" font-weight="700">波形输入</text>
+        <text x="85" y="162" text-anchor="middle" fill="#93a4bd" font-size="12.5">time,voltage / 仅电压</text>
+
+        <rect x="196" y="108" width="150" height="74" rx="12" fill="#16233c" stroke="#38bdf8" stroke-opacity=".55"/>
+        <text x="271" y="134" text-anchor="middle" font-size="15" font-weight="700">OSR 与重采样</text>
+        <text x="271" y="156" text-anchor="middle" fill="#93a4bd" font-size="12.5">自动判定 M</text>
+        <text x="271" y="172" text-anchor="middle" fill="#93a4bd" font-size="12.5">均匀网格 t[k]</text>
+
+        <rect x="382" y="108" width="150" height="74" rx="12" fill="#16233c" stroke="#38bdf8" stroke-opacity=".55"/>
+        <text x="457" y="134" text-anchor="middle" font-size="15" font-weight="700">码型与同步</text>
+        <text x="457" y="156" text-anchor="middle" fill="#93a4bd" font-size="12.5">PRBS 再生</text>
+        <text x="457" y="172" text-anchor="middle" fill="#93a4bd" font-size="12.5">互相关对齐</text>
+
+        <rect x="568" y="100" width="170" height="90" rx="12" fill="#1b2946" stroke="#f59e0b" stroke-opacity=".6"/>
+        <text x="653" y="130" text-anchor="middle" font-size="15" font-weight="700">线性拟合核心</text>
+        <text x="653" y="152" text-anchor="middle" fill="#93a4bd" font-size="12.5">Y 折叠 · X 设计矩阵</text>
+        <text x="653" y="170" text-anchor="middle" fill="#93a4bd" font-size="12.5">P = YXᵀ(XXᵀ)⁻¹</text>
+
+        <rect x="774" y="100" width="160" height="90" rx="12" fill="#16233c" stroke="#38bdf8" stroke-opacity=".55"/>
+        <text x="854" y="130" text-anchor="middle" font-size="15" font-weight="700">均衡器求解</text>
+        <text x="854" y="152" text-anchor="middle" fill="#93a4bd" font-size="12.5">FFE 抽头 w</text>
+        <text x="854" y="170" text-anchor="middle" fill="#93a4bd" font-size="12.5">DFE 抽头 b</text>
+
+        <rect x="970" y="88" width="180" height="114" rx="12" fill="#16233c" stroke="#34d399" stroke-opacity=".6"/>
+        <text x="1060" y="116" text-anchor="middle" font-size="15" font-weight="700">指标与图形</text>
+        <text x="1060" y="138" text-anchor="middle" fill="#93a4bd" font-size="12.5">SNDR · RLM · SNR_ISI</text>
+        <text x="1060" y="156" text-anchor="middle" fill="#93a4bd" font-size="12.5">传递函数 · 眼宽</text>
+        <text x="1060" y="174" text-anchor="middle" fill="#93a4bd" font-size="12.5">PNG + HTML 报告</text>
+
+        <line x1="162" y1="145" x2="192" y2="145" stroke="#5b7292" stroke-width="2" marker-end="url(#ar)"/>
+        <line x1="348" y1="145" x2="378" y2="145" stroke="#5b7292" stroke-width="2" marker-end="url(#ar)"/>
+        <line x1="534" y1="145" x2="564" y2="145" stroke="#5b7292" stroke-width="2" marker-end="url(#ar)"/>
+        <line x1="740" y1="145" x2="770" y2="145" stroke="#5b7292" stroke-width="2" marker-end="url(#ar)"/>
+        <line x1="936" y1="145" x2="966" y2="145" stroke="#5b7292" stroke-width="2" marker-end="url(#ar)"/>
+
+        <text x="271" y="228" text-anchor="middle" fill="#8fa3c2" font-size="12.5">第 2 章</text>
+        <text x="457" y="228" text-anchor="middle" fill="#8fa3c2" font-size="12.5">第 2 章</text>
+        <text x="653" y="228" text-anchor="middle" fill="#8fa3c2" font-size="12.5">第 3 章</text>
+        <text x="854" y="228" text-anchor="middle" fill="#8fa3c2" font-size="12.5">第 4 章</text>
+        <text x="1060" y="228" text-anchor="middle" fill="#8fa3c2" font-size="12.5">第 5 章</text>
+      </g>
+    </svg>
+    <div class="eli5" style="margin-top:8px"><span class="lbl">人话版</span><p>就像拿已知歌词去对一段嘈杂录音：先对准拍子（同步），再看每个字被房间回声拖成什么样（脉冲响应），然后设计一个反向滤镜把回声压掉（FFE/DFE），最后给这段录音打分（SNDR/RLM/眼图）。</p></div>
+  </div>
+  <div class="sec">导览</div>
+  <div class="num">3</div>
+</section>
+
+<section class="slide" data-sec="第1章 为什么">
+  <div class="body divider">
+    <div class="big">01</div>
+    <h2>为什么需要 TX Linear Fit</h2>
+    <ul>
+      <li>我们手里有什么、想得到什么</li>
+      <li>三个层次的交付物</li>
+      <li>符号表、以及与协议测试的边界</li>
+    </ul>
+  </div>
+  <div class="sec">第 1 章 · 为什么</div>
+  <div class="num">4</div>
+</section>
+
+<section class="slide" data-sec="第1章 为什么">
+  <div class="body">
+    <div class="kicker">问题定义</div>
+    <h2>我们只有一条波形，却想知道四件事</h2>
+    <div class="eli5"><span class="lbl">人话</span><p>示波器给我们的只是一条上下起伏的线。但工程师真正关心的是：这条线的「形状」是谁造成的、能不能补救、补救后还剩多少余量。</p></div>
+    <div class="two">
+      <div class="card"><h3>① 通道/发送端把符号拖成了什么样？</h3><p>→ 提取<b>线性拟合脉冲 p[k]</b>：一个理想单位符号经过整条链路后的样子（含前后游标）。</p></div>
+      <div class="card"><h3>② 能不能用均衡器把它救回来？</h3><p>→ 求一个分析侧 <b>FFE</b>（可加 <b>DFE</b>），观察均衡后星座是否张开。</p></div>
+      <div class="card"><h3>③ 质量如何量化？</h3><p>→ <b>SNDR_fit</b>、<b>SNR_ISI</b>、<b>RLM</b>、<b>眼宽/眼高</b>。</p></div>
+      <div class="card"><h3>④ 频域长什么样？</h3><p>→ 由脉冲反推<b>测量派生传递函数</b>：Nyquist 幅度、3 dB 带宽。</p></div>
+    </div>
+    <p style="margin-top:12px">输入前提：波形必须是<strong>已知周期的确定性码型</strong>（PRBS7/13/15/31 或 Clock 类），否则无法重建理想符号序列，也就无法做最小二乘。</p>
+  </div>
+  <div class="sec">第 1 章 · 为什么</div>
+  <div class="num">5</div>
+</section>
+
+<section class="slide" data-sec="第1章 为什么">
+  <div class="body">
+    <div class="kicker">核心直觉</div>
+    <h2>为什么可以用「最小二乘」把脉冲挖出来</h2>
+    <div class="two-6-4">
+      <div>
+        <div class="eli5"><span class="lbl">人话</span><p>如果我知道录音里每个字是什么（符号序列 x），又听到了一段被房间弄糊的声音（波形 y），那我就能问：<em>什么样的「房间指纹」h，能把 x 卷积成 y？</em> 这个问题写下来就是一组线性方程。</p></div>
+        <h3>三步逻辑</h3>
+        <ol class="steps">
+          <li>把长波形按 UI 切齐、叠成矩阵 <b>Y</b>（每一列是一个符号周期）。</li>
+          <li>把符号序列排成设计矩阵 <b>X</b>（每一行是「延迟 r 个 UI 的那个符号」）。</li>
+          <li>解 <b>Y ≈ P·X</b>，<b>P</b> 就是脉冲在不同相位上的采样 —— 列优先展开即得 p[k]。</li>
+        </ol>
+      </div>
+      <div>
+        <div class="imgbox"><img src="{{IMG_PULSE}}" alt="线性拟合脉冲"></div>
+        <figcaption>拟合脉冲示例：主峰 + 前后游标（pre/post cursor）</figcaption>
+      </div>
+    </div>
+  </div>
+  <div class="sec">第 1 章 · 为什么</div>
+  <div class="num">6</div>
+</section>
+
+<section class="slide" data-sec="第1章 为什么">
+  <div class="body">
+    <div class="kicker">符号表</div>
+    <h2>先统一语言：本课用到的符号</h2>
+    <div class="two">
+      <div>
+        <table>
+          <tr><th class="mono">符号</th><th>含义</th><th class="mono">代码参数</th></tr>
+          <tr><td class="mono">R_s</td><td>符号率（baud）</td><td class="mono">symbol_rate</td></tr>
+          <tr><td class="mono">UI</td><td>一个符号周期 = 1/R_s</td><td class="mono">-</td></tr>
+          <tr><td class="mono">M</td><td>每 UI 采样数（OSR）</td><td class="mono">osr</td></tr>
+          <tr><td class="mono">N_s</td><td>输入记录采样点数</td><td class="mono">文件决定</td></tr>
+          <tr><td class="mono">N</td><td>参与拟合的符号数</td><td class="mono">输入长度决定</td></tr>
+          <tr><td class="mono">N_p</td><td>拟合脉冲总 UI 数</td><td class="mono">total_cursor_fit</td></tr>
+          <tr><td class="mono">D_p</td><td>主光标前的 UI 数</td><td class="mono">pre_cursor_fit</td></tr>
+        </table>
+      </div>
+      <div>
+        <table>
+          <tr><th class="mono">符号</th><th>含义</th><th class="mono">代码字段</th></tr>
+          <tr><td class="mono">N_w</td><td>FFE 总 tap 数</td><td class="mono">total_cursor_ffe</td></tr>
+          <tr><td class="mono">D_w</td><td>FFE 主 tap 之前的 tap 数</td><td class="mono">pre_cursor_ffe</td></tr>
+          <tr><td class="mono">N_DFE</td><td>DFE post-cursor tap 数</td><td class="mono">dfe_tap_num</td></tr>
+          <tr><td class="mono">y[k]</td><td>重采样后的波形</td><td class="mono">stream_input_interp</td></tr>
+          <tr><td class="mono">x[n]</td><td>对齐后的理想符号</td><td class="mono">stream_decision_interp</td></tr>
+          <tr><td class="mono">p[k]</td><td>线性拟合脉冲</td><td class="mono">fit_results['p']</td></tr>
+          <tr><td class="mono">e[k]</td><td>拟合残差</td><td class="mono">fit_results['e']</td></tr>
+        </table>
+      </div>
+    </div>
+    <p style="margin-top:10px">记法：大写字母表示矩阵，小写表示标量/向量，<span class="kbd">(·)ᵀ</span> 转置，<span class="kbd">‖·‖₂</span> 欧氏范数，<span class="kbd">‖·‖_F</span> Frobenius 范数。</p>
+  </div>
+  <div class="sec">第 1 章 · 为什么</div>
+  <div class="num">7</div>
+</section>
+
+<section class="slide" data-sec="第1章 为什么">
+  <div class="body">
+    <div class="kicker">边界</div>
+    <h2>这是诊断工具，不是一致性测试系统</h2>
+    <div class="warn"><span class="lbl">必须说清楚</span><p>本工具是波形分析与算法验证工具。<span class="kbd">neutral</span> / <span class="kbd">ieee8023</span> / <span class="kbd">oif</span> 只改变报告里的语义标签，<strong>不会</strong>自动选择协议参数、不会加限值、不会给 pass/fail。</p></div>
+    <div class="two">
+      <div class="card"><h3>它能做</h3><ul>
+        <li>发送端波形诊断与参数敏感性分析</li>
+        <li>算法验证（与 MATLAB golden 逐项比对）</li>
+        <li>实验数据归档（PNG + CSV + 自包含 HTML）</li>
+      </ul></div>
+      <div class="card"><h3>它不能做</h3><ul>
+        <li>替代 VNA 的 S 参数测量</li>
+        <li>凭一份波形证明 IEEE 802.3 / OIF CEI 合规</li>
+        <li>代替规定滤波器、夹具去嵌与仪器流程</li>
+      </ul></div>
+    </div>
+    <p style="margin-top:10px">正式认证应核对：目标 PHY、测试点、标准版本、夹具去嵌、规定滤波器与仪器流程。标准条款与限值会随修订变化。</p>
+  </div>
+  <div class="sec">第 1 章 · 为什么</div>
+  <div class="num">8</div>
+</section>

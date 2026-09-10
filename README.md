@@ -10,6 +10,12 @@
 算法、公式推导、协议边界和完整操作说明见
 [《TX Linear Fit 技术原理与使用指南》](docs/TECHNICAL_GUIDE.md)。
 
+面向团队的培训幻灯片（自包含 HTML，49 页，含类比层 / 公式 / 代码落点 / 排障清单）见
+[docs/slides/tx_linear_fit_training.html](docs/slides/tx_linear_fit_training.html)：
+浏览器直接打开，方向键翻页，按 O 开目录，Ctrl+P 导出 PDF。内容源在
+docs/slides/src/，改完后运行 python docs/slides/build_slides.py 重新构建，
+并运行 python docs/slides/check_slides.py 自检。
+
 ## 环境
 
 - Python 3.10+

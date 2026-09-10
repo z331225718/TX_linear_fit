@@ -1,0 +1,209 @@
+<section class="slide" data-sec="第2章 预处理">
+  <div class="body divider">
+    <div class="big">02</div>
+    <h2>输入与预处理</h2>
+    <ul>
+      <li>波形文件怎么读（含一个空格陷阱）</li>
+      <li>OSR 怎么自动定出来，什么时候必须手动</li>
+      <li>PRBS 码型再生与互相关同步</li>
+    </ul>
+  </div>
+  <div class="sec">第 2 章 · 预处理</div>
+  <div class="num">9</div>
+</section>
+
+<section class="slide" data-sec="第2章 预处理">
+  <div class="body">
+    <div class="kicker">输入</div>
+    <h2>两种输入格式，一个精确到空格的约定</h2>
+    <div class="two">
+      <div>
+        <h3>lab_txt：time,voltage</h3>
+        <div class="code">Scope export header
+Data,<span class="cmt">&lt;-- 行末有一个 ASCII 空格</span>
+0.000000000000e+00,0.0123
+1.176470588235e-12,0.0187
+...
+-1</div>
+        <p style="margin-top:8px">解析器逐行读，直到遇到<strong>恰好等于</strong> <span class="kbd">Data, </span>（含尾随空格）的那一行，之后每行按第一个逗号切成时间与电压。</p>
+      </div>
+      <div>
+        <h3>lab_csv：只有电压</h3>
+        <div class="code">Scope export header
+Data,<span class="cmt">&lt;-- 同样含尾随空格</span>
+0.0123
+0.0187
+...
+-1</div>
+        <p style="margin-top:8px">没有时间轴 ⇒ <strong>无法自行判断采样率</strong> ⇒ 必须手动指定 <span class="kbd">--osr</span>，否则报错而不是猜。</p>
+      </div>
+    </div>
+    <div class="warn"><span class="lbl">常见的坑</span><p>很多示波器导出是 <span class="kbd">Data,</span>（无空格）或 <span class="kbd">Data , </span>。<strong>差一个字符就读不到数据</strong>；文件里出现的 <span class="kbd">-1</span> 行是终止标记，会被跳过而不是当成数据。</p></div>
+    <div class="code" style="max-height:110px"><span class="cmt"># 代码落点</span>
+<b>process_input.py</b>   read_lab_txt / read_lab_csv  —— 逐行解析与容错
+<b>application.py</b>     analyze() —— 统一入口，串起解析 → OSR → 分析</div>
+  </div>
+  <div class="sec">第 2 章 · 预处理</div>
+  <div class="num">10</div>
+</section>
+
+<section class="slide" data-sec="第2章 预处理">
+  <div class="body">
+    <div class="kicker">OSR 判定</div>
+    <h2>M（每 UI 采样数）从哪里来</h2>
+    <div class="eli5"><span class="lbl">人话</span><p>要知道「一个符号被切成了几段」，先量相邻采样点的平均间距，再用符号率换算。就像知道每格胶片多长、每秒放几格，就能算出动作被切成几张。</p></div>
+    <div class="two-6-4">
+      <div>
+        <div class="formula">Δt̃          = median{ t[k+1] − t[k] }      0 ≤ k &lt; N_s−1
+M_native    = 1 / (R_s · Δt̃)                局部网格
+M_effective = (N_s − 1) / { R_s · [t[N_s−1] − t[0]] }   整段平均</div>
+        <h3>自动模式接受条件（全部满足）</h3>
+        <ul>
+          <li><span class="kbd">M_native</span> 与 <span class="kbd">M_effective</span> 取整后<strong>一致</strong>；</li>
+          <li>取整误差 <strong>≤ 10%</strong>；</li>
+          <li><strong>M ≥ 2</strong>。</li>
+        </ul>
+      </div>
+      <div>
+        <div class="card"><h3>为什么不满足就报错？</h3><p>两者不一致通常意味着：符号率填错、时间单位错（ns 当 s）、导出丢点、或记录太短。<strong>猜一个 OSR 会让后面所有指标失去意义</strong>，所以宁可直接失败。</p></div>
+        <div class="card" style="margin-top:12px"><h3>丢点诊断</h3><p>用 <span class="kbd">Δt / Δt̃</span> 的整数倍估计缺失采样比例，写进报告的 <span class="kbd">missing_sample_fraction</span>。</p></div>
+        <div class="code" style="margin-top:12px;max-height:150px"><span class="cmt"># 代码落点</span>
+<b>application.py</b>
+  resolve_osr()            —— 判定与诊断
+  validate_fit_config()    —— 参数校验</div>
+      </div>
+    </div>
+  </div>
+  <div class="sec">第 2 章 · 预处理</div>
+  <div class="num">11</div>
+</section>
+
+<section class="slide" data-sec="第2章 预处理">
+  <div class="body">
+    <div class="kicker">重采样</div>
+    <h2>落到均匀分析网格上</h2>
+    <div class="two-6-4">
+      <div>
+        <div class="formula">t_grid[k] = t[0] + k / (M · R_s),   k = 0 … N_grid−1</div>
+        <ul>
+          <li>带时间轴的波形用<strong>线性插值</strong>搬到这条网格上；</li>
+          <li>只有电压的文件不做插值，直接按给定 OSR 解释；</li>
+          <li>分析网格是「每 UI 恰好 M 个点」，后面所有矩阵推导都依赖这个前提。</li>
+        </ul>
+        <div class="warn"><span class="lbl">注意</span><p>对带时间轴的数据<strong>手动</strong>指定 OSR 会强制使用该网格（等于重采样）。只有在明确知道自己在做什么时才这么做。</p></div>
+      </div>
+      <div>
+        <div class="card"><h3>结果形状</h3><p><span class="kbd">y[k]</span>：长度 <span class="kbd">N_s</span> 的一维波形，之后被折叠成 <span class="kbd">M × N</span> 矩阵。</p></div>
+        <div class="imgbox" style="margin-top:12px"><img src="{{IMG_ERR}}" alt="线性拟合误差"></div>
+        <figcaption>重采样与分析结果预览：拟合、数据、残差三条曲线</figcaption>
+      </div>
+    </div>
+  </div>
+  <div class="sec">第 2 章 · 预处理</div>
+  <div class="num">12</div>
+</section>
+
+<section class="slide" data-sec="第2章 预处理">
+  <div class="body">
+    <div class="kicker">码型</div>
+    <h2>本地重建理想符号序列</h2>
+    <div class="two">
+      <div>
+        <h3>PAM4 Gray 映射（当前实现）</h3>
+        <table>
+          <tr><th class="mono">比特 (A,B)</th><th class="mono">符号</th><th class="mono">归一化电平</th></tr>
+          <tr><td class="mono">00</td><td class="mono">0</td><td class="mono">−1</td></tr>
+          <tr><td class="mono">01</td><td class="mono">1</td><td class="mono">−1/3</td></tr>
+          <tr><td class="mono">11</td><td class="mono">2</td><td class="mono">+1/3</td></tr>
+          <tr><td class="mono">10</td><td class="mono">3</td><td class="mono">+1</td></tr>
+        </table>
+        <p style="margin-top:8px">NRZ 则为 <span class="kbd">2·(bit − 0.5)</span>，即 ±1。</p>
+      </div>
+      <div>
+        <h3>PRBS 多项式与周期</h3>
+        <div class="formula">PRBS13: G(x) = 1 + x + x² + x¹² + x¹³
+周期 = 2¹³ − 1 = 8191
+
+PRBS7 : x⁷ + x⁶ + 1       周期 127
+PRBS15: x¹⁵ + x¹⁴ + 1     周期 32767
+PRBS31: x³¹ + x²⁸ + 1     （完整周期过长，CLI 需限长）</div>
+        <div class="eli5"><span class="lbl">人话</span><p>PRBS 是一串「看起来随机、其实完全可复现」的比特。因为可复现，我们才能在电脑里生成一模一样的序列去和波形对齐。</p></div>
+      </div>
+    </div>
+    <div class="warn"><span class="lbl">协议边界</span><p>PRBS13 多项式与 Gray 映射与 OIF CEI-05.3 的 QPRBS13-CEI 一致，但正式合规仍需核对规范要求的发生器方向、种子、bit pairing 与序列示例。</p></div>
+    <div class="code" style="max-height:96px"><span class="cmt"># 代码落点</span>
+<b>pattern.py</b>  gen_prbs(s, taps, num_bits) / pam4_levels(bits) / nrz_levels(bits) / gen_data_pattern(...)</div>
+  </div>
+  <div class="sec">第 2 章 · 预处理</div>
+  <div class="num">13</div>
+</section>
+
+<section class="slide" data-sec="第2章 预处理">
+  <div class="body">
+    <div class="kicker">同步</div>
+    <h2>把本地码型「滑」到波形上：互相关对齐</h2>
+    <div class="two-6-4">
+      <div>
+        <div class="eli5"><span class="lbl">人话</span><p>把歌词在录音上从左到右滑动，哪里最吻合，哪里就是起点。这里「滑动」是互相关，吻合程度是相关系数。</p></div>
+        <ol class="steps">
+          <li>把符号序列按每符号重复 M 次上采样，得到与波形同速率的参考序列。</li>
+          <li>与实测波形做互相关，取 <strong>|相关| 最大</strong>的延迟作为对齐点。</li>
+          <li>若该峰为<strong>负</strong>，说明波形极性反了，自动整体翻转波形。</li>
+        </ol>
+        <div class="warn"><span class="lbl">为什么用绝对值</span><p>差分探头或反相链路会让整条波形取负。用 |相关| 峰值可以先对齐、再判极性，而不是要求用户先猜对极性。</p></div>
+      </div>
+      <div>
+        <svg viewBox="0 0 420 250" width="100%" height="250" role="img" aria-label="互相关同步">
+          <g font-family="Segoe UI, sans-serif" font-size="12.5" fill="#c3d0e6">
+            <text x="10" y="18" fill="#8fa3c2">参考序列（符号×M 上采样）</text>
+            <rect x="10" y="26" width="400" height="30" rx="6" fill="#16233c" stroke="#38bdf8" stroke-opacity=".45"/>
+            <path d="M10,41 h20 v-10 h20 v10 h20 v-10 h40 v10 h20 v-10 h20 v10 h20 v-10 h60 v10 h20 v-10 h40 v10 h20 v-10 h60" fill="none" stroke="#38bdf8" stroke-width="2"/>
+            <text x="10" y="86" fill="#8fa3c2">实测波形</text>
+            <rect x="10" y="94" width="400" height="30" rx="6" fill="#16233c" stroke="#f59e0b" stroke-opacity=".45"/>
+            <path d="M10,109 h30 v-9 h20 v9 h30 v-9 h30 v9 h30 v-9 h50 v9 h25 v-9 h30 v9 h45 v-9 h40 v9 h40" fill="none" stroke="#f59e0b" stroke-width="2"/>
+            <text x="10" y="152" fill="#8fa3c2">互相关 |c(τ)|</text>
+            <polyline points="10,200 60,196 110,192 150,184 190,120 230,60 270,150 310,186 360,194 400,198" fill="none" stroke="#34d399" stroke-width="2.5"/>
+            <line x1="230" y1="60" x2="230" y2="205" stroke="#34d399" stroke-dasharray="4 4" stroke-opacity=".8"/>
+            <circle cx="230" cy="60" r="4.5" fill="#34d399"/>
+            <text x="238" y="52" fill="#34d399" font-size="12">峰值 → 对齐延迟 τ*</text>
+            <text x="10" y="230" fill="#8fa3c2" font-size="12">若 c(τ*) &lt; 0：整体翻转波形极性后重新对齐</text>
+          </g>
+        </svg>
+      </div>
+    </div>
+  </div>
+  <div class="sec">第 2 章 · 预处理</div>
+  <div class="num">14</div>
+</section>
+
+<section class="slide" data-sec="第2章 预处理">
+  <div class="body">
+    <div class="kicker">对齐微调</div>
+    <h2>差一两个 UI？再搜一次</h2>
+    <div class="two-6-4">
+      <div>
+        <p>互相关给出的是<strong>采样级</strong>延迟，但拟合矩阵需要<strong>符号级</strong>对齐。做法是：</p>
+        <ol class="steps">
+          <li>先用当前对齐做一次拟合，看 FFE 最大 tap 落在哪；</li>
+          <li>若没有落在期望的主 tap 位置（1-based 的 <span class="kbd">D_w + 1</span>），依次尝试符号级移位 <span class="kbd">−2, −1, +1, +2</span> UI；</li>
+          <li>命中即停并记录 <span class="kbd">alignment_shift</span>；全部失败则<strong>报错</strong>，不静默继续。</li>
+        </ol>
+        <div class="warn"><span class="lbl">为什么不静默容错</span><p>错位的拟合会给出「看起来正常」但物理上无意义的脉冲与抽头。宁可失败并提示检查符号率/码型/极性。</p></div>
+      </div>
+      <div>
+        <div class="code" style="max-height:260px"><span class="cmt"># 代码落点</span>
+<b>pulse_response_tool.py</b>
+  config_input_stream_f()     裁剪 + 网格化
+  config_decision_stream_f()  PRBS 再生 + xcorr 同步 + 极性
+  apply_linear_fit_pulse_f()  拟合 + ±2 UI 对齐搜索
+
+<span class="cmt"># 相关字段</span>
+stream_decision_interp    对齐后的符号
+stream_decision_upsampled 上采样参考
+alignment_shift           命中的移位量</div>
+      </div>
+    </div>
+  </div>
+  <div class="sec">第 2 章 · 预处理</div>
+  <div class="num">15</div>
+</section>

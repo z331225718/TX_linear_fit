@@ -1,0 +1,90 @@
+</div></div>
+<div id="toc"><h2>目录 · 点击跳转</h2><ol id="tocList"></ol></div>
+<div id="help">← → 翻页 · O 目录 · F 全屏 · Ctrl+P 导出 PDF</div>
+<script>
+(function () {
+  var slides = Array.prototype.slice.call(document.querySelectorAll('.slide'));
+  var stage = document.getElementById('stage');
+  var wrap = document.getElementById('stageWrap');
+  var bar = document.getElementById('progress');
+  var toc = document.getElementById('toc');
+  var tocList = document.getElementById('tocList');
+  var idx = 0;
+
+  function fit() {
+    var s = Math.min(window.innerWidth / 1280, window.innerHeight / 720);
+    stage.style.transform = 'scale(' + s + ')';
+  }
+
+  function titleOf(sl) {
+    var h = sl.querySelector('h2') || sl.querySelector('h1');
+    return h ? h.textContent.trim() : 'Untitled';
+  }
+
+  function show(i, push) {
+    if (i < 0) { i = 0; }
+    if (i > slides.length - 1) { i = slides.length - 1; }
+    idx = i;
+    for (var k = 0; k < slides.length; k++) {
+      slides[k].classList.toggle('active', k === idx);
+    }
+    bar.style.width = ((idx + 1) / slides.length * 100) + '%';
+    if (push !== false) {
+      try { history.replaceState(null, '', '#' + (idx + 1)); } catch (e) {}
+    }
+  }
+
+  function buildToc() {
+    var html = '';
+    for (var i = 0; i < slides.length; i++) {
+      var sec = slides[i].getAttribute('data-sec') || '';
+      html += '<li data-i="' + i + '"><b>' + (i + 1) + '</b>' + titleOf(slides[i]) +
+              ' <span style="color:#5b7292;font-size:12.5px">' + sec + '</span></li>';
+    }
+    tocList.innerHTML = html;
+    var items = tocList.querySelectorAll('li');
+    for (var j = 0; j < items.length; j++) {
+      items[j].addEventListener('click', function () {
+        show(parseInt(this.getAttribute('data-i'), 10));
+        toc.classList.remove('on');
+      });
+    }
+  }
+
+  function toggleToc() { toc.classList.toggle('on'); }
+
+  function fullscreen() {
+    if (!document.fullscreenElement) {
+      if (document.documentElement.requestFullscreen) { document.documentElement.requestFullscreen(); }
+    } else if (document.exitFullscreen) { document.exitFullscreen(); }
+  }
+
+  document.addEventListener('keydown', function (e) {
+    var k = e.key;
+    if (k === 'ArrowRight' || k === 'PageDown' || k === ' ' || k === 'Enter') { show(idx + 1); e.preventDefault(); }
+    else if (k === 'ArrowLeft' || k === 'PageUp' || k === 'Backspace') { show(idx - 1); e.preventDefault(); }
+    else if (k === 'Home') { show(0); e.preventDefault(); }
+    else if (k === 'End') { show(slides.length - 1); e.preventDefault(); }
+    else if (k === 'o' || k === 'O') { toggleToc(); e.preventDefault(); }
+    else if (k === 'f' || k === 'F') { fullscreen(); e.preventDefault(); }
+    else if (k === 'Escape') { toc.classList.remove('on'); }
+    else if (k === 'g') { show(parseInt(window.prompt('跳到第几页？') || '1', 10) - 1); }
+  });
+
+  wrap.addEventListener('click', function (e) {
+    if (toc.classList.contains('on')) { return; }
+    var x = e.clientX / window.innerWidth;
+    if (x > 0.72) { show(idx + 1); }
+    else if (x < 0.18) { show(idx - 1); }
+  });
+
+  window.addEventListener('resize', fit);
+
+  buildToc();
+  fit();
+  var h = parseInt((window.location.hash || '#1').replace(/#/g, ''), 10);
+  show(isNaN(h) ? 0 : h - 1, false);
+})();
+</script>
+</body>
+</html>

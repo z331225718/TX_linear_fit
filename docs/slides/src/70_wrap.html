@@ -1,0 +1,158 @@
+<section class="slide" data-sec="第7章 上手">
+  <div class="body divider">
+    <div class="big">07</div>
+    <h2>上手与自查</h2>
+    <ul>
+      <li>两条 CLI 命令跑通端到端</li>
+      <li>GUI 五步操作与默认值</li>
+      <li>代码地图、参考资料、一页纸记忆卡</li>
+    </ul>
+  </div>
+  <div class="sec">第 7 章 · 上手</div>
+  <div class="num">44</div>
+</section>
+
+<section class="slide" data-sec="第7章 上手">
+  <div class="body">
+    <div class="kicker">CLI</div>
+    <h2>两条命令覆盖两类输入</h2>
+    <div class="code" style="font-size:14px;max-height:230px"><span class="cmt"># ① 带时间轴（OSR 自动推断）—— 推荐</span>
+python python_src/run_tx_linear_fit.py --filetype lab_txt --filename "C:/path/to/Waveform.txt" --symbol_rate 53.125e9 --modulation PAM4 --prbs_pattern PRBS13 --pattern_length 8191 --pre_cursor_fit 4 --total_cursor_fit 32 --pre_cursor_ffe 4 --total_cursor_ffe 18 --dfe_tap_num 1 --output-dir outputs/run
+
+<span class="cmt"># ② 只有电压（必须显式指定 OSR）</span>
+python python_src/run_tx_linear_fit.py --filetype lab_csv --filename "C:/path/to/Waveform.csv" --osr 16 --symbol_rate 53.125e9 --modulation PAM4 --prbs_pattern PRBS13 --pattern_length 8191 --pre_cursor_fit 4 --total_cursor_fit 32 --pre_cursor_ffe 4 --total_cursor_ffe 18 --dfe_tap_num 1 --output-dir outputs/run</div>
+    <div class="two" style="margin-top:14px">
+      <div class="card"><h3>参数之间的关系</h3><div class="formula" style="font-size:15px;padding:10px 12px">0 ≤ D_p
+D_p + N_DFE &lt; N_p
+0 ≤ D_w &lt; N_w ≤ N_p</div></div>
+      <div class="card"><h3>选择建议</h3><ul>
+        <li><span class="kbd">pre_cursor_fit</span> 覆盖可见前游标；<span class="kbd">total_cursor_fit</span> 覆盖主要 pulse tail；</li>
+        <li>tap 不是越多越好：过长会让逆滤波追逐噪声；</li>
+        <li>要复现协议条款，先按目标接口设 <span class="kbd">N_p, D_p</span> 与采集滤波器，再谈限值。</li>
+      </ul></div>
+    </div>
+  </div>
+  <div class="sec">第 7 章 · 上手</div>
+  <div class="num">45</div>
+</section>
+
+<section class="slide" data-sec="第7章 上手">
+  <div class="body">
+    <div class="kicker">GUI</div>
+    <h2>五步跑完一次分析</h2>
+    <div class="two-6-4">
+      <div>
+        <ol class="steps">
+          <li>选择输入文件（<span class="kbd">.txt</span> / <span class="kbd">.csv</span>）与输出目录；</li>
+          <li>填符号率（默认 <span class="kbd">53.125 GBd</span>，是 symbol rate，不是 PAM4 比特率）；</li>
+          <li>选 NRZ/PAM4 与 PRBS7/13/15（自动使用完整周期长度）；</li>
+          <li>带时间轴的 txt 保持 OSR「自动」；只有电压的 csv 切「手动」；</li>
+          <li>按需调整 pulse fit / FFE / DFE tap 数，点「开始分析」，默认生成并打开报告。</li>
+        </ol>
+        <div class="code" style="margin-top:8px">python python_src/gui.py</div>
+      </div>
+      <div>
+        <table>
+          <tr><th>GUI 默认值</th><th class="mono">默认</th></tr>
+          <tr><td>符号率</td><td class="mono">53.125 GBd</td></tr>
+          <tr><td>调制 / 码型</td><td class="mono">PAM4 / PRBS13</td></tr>
+          <tr><td>OSR</td><td class="mono">auto</td></tr>
+          <tr><td>Pulse fit</td><td class="mono">D_p=4, N_p=32</td></tr>
+          <tr><td>FFE</td><td class="mono">D_w=4, N_w=18</td></tr>
+          <tr><td>DFE</td><td class="mono">1 tap</td></tr>
+        </table>
+        <div class="warn" style="margin-top:12px"><span class="lbl">默认值不是协议配置</span><p>GUI 默认 <span class="kbd">N_p=32, D_p=4, N_w=18</span> 是为了保留较长 pulse tail 并给 18-tap 分析 FFE 足够约束，<strong>不等于</strong>任何 OIF/IEEE profile。PRBS31 完整周期过长，只在 CLI 提供，且应按采集长度设置有界 <span class="kbd">--pattern_length</span>。</p></div>
+      </div>
+    </div>
+  </div>
+  <div class="sec">第 7 章 · 上手</div>
+  <div class="num">46</div>
+</section>
+
+<section class="slide" data-sec="第7章 上手">
+  <div class="body">
+    <div class="kicker">代码地图</div>
+    <h2>想改哪里，先看这张表</h2>
+    <div class="two">
+      <div>
+        <table>
+          <tr><th>内容</th><th class="mono">实现</th></tr>
+          <tr><td>统一流程 / OSR / 参数校验</td><td class="mono">application.py</td></tr>
+          <tr><td>PRBS 与 PAM4/NRZ 映射</td><td class="mono">pattern.py</td></tr>
+          <tr><td>示波器文本解析</td><td class="mono">process_input.py</td></tr>
+          <tr><td>矩阵拟合、FFE/DFE 系数</td><td class="mono">fit_pulse_response.py</td></tr>
+          <tr><td>同步 / 均衡 / 星座 / 传递函数</td><td class="mono">pulse_response_tool.py</td></tr>
+        </table>
+      </div>
+      <div>
+        <table>
+          <tr><th>内容</th><th class="mono">实现</th></tr>
+          <tr><td>RLM</td><td class="mono">calc_rlm.py</td></tr>
+          <tr><td>眼宽与过零统计</td><td class="mono">eye_info.py</td></tr>
+          <tr><td>持久化眼图</td><td class="mono">eye_persistence.py</td></tr>
+          <tr><td>图形</td><td class="mono">plots.py</td></tr>
+          <tr><td>HTML 报告</td><td class="mono">report.py</td></tr>
+          <tr><td>GUI / CLI</td><td class="mono">gui.py / run_tx_linear_fit.py</td></tr>
+          <tr><td>golden 对比</td><td class="mono">verify_against_golden.py</td></tr>
+          <tr><td>MATLAB 语义封装</td><td class="mono">matlab_compat.py</td></tr>
+        </table>
+      </div>
+    </div>
+    <div class="chips" style="margin-top:12px">
+      <span class="chip acc">测试：python_src/tests/（pytest）</span>
+      <span class="chip">技术文档：docs/TECHNICAL_GUIDE.md</span>
+      <span class="chip warn">golden 采集：matlab_golden/capture_golden*.m</span>
+    </div>
+  </div>
+  <div class="sec">第 7 章 · 上手</div>
+  <div class="num">47</div>
+</section>
+
+<section class="slide" data-sec="第7章 上手">
+  <div class="body">
+    <div class="kicker">延伸阅读</div>
+    <h2>想深挖，从这里开始</h2>
+    <ul>
+      <li><strong>IEEE Std 802.3-2022</strong> —— 以太网基础标准与修订入口：<span class="kbd">standards.ieee.org/ieee/802.3/10422/</span></li>
+      <li><strong>IEEE P802.3bs</strong> PAM4 TX linearity / RLM 材料（给出 V_mid、ES1、ES2 与 RLM 公式）：<span class="kbd">ieee802.org/3/bs/public/16_03/healey_3bs_02_0316.pdf</span></li>
+      <li><strong>IEEE P802.3ck</strong> TX SNDR 背景（p_max、σ_e、σ_n 结构）：<span class="kbd">ieee802.org/3/ck/public/adhoc/oct02_19/diminico_3ck_adhoc_100219.pdf</span></li>
+      <li><strong>OIF-CEI-05.3</strong> —— 矩阵拟合与 FFE（10.3.1.6.4-5）、Gray mapping / QPRBS13-CEI / RLM（16.C.1、16.C.3、16.C.4.3）、CEI-112G XSR/MR/LR（24/26/27.3.1.6）</li>
+    </ul>
+    <div class="warn"><span class="lbl">提醒</span><p>标准条款与限值会随修订变化；任务组材料不是标准正文。正式测试应查阅目标标准的<strong>当前完整文本</strong>，并以目标 PHY、测试点与规定滤波器为准。</p></div>
+    <div class="card"><h3>与本材料的对应关系</h3><p>公式、符号与边界描述均与仓库内 <span class="kbd">docs/TECHNICAL_GUIDE.md</span> 一致；本材料是它的<strong>教学版</strong>：补了类比、图示、代码落点与排障清单。</p></div>
+  </div>
+  <div class="sec">第 7 章 · 上手</div>
+  <div class="num">48</div>
+</section>
+
+<section class="slide" data-sec="第7章 上手">
+  <div class="body">
+    <div class="kicker">总结</div>
+    <h2>一页纸记忆卡</h2>
+    <div class="two">
+      <div>
+        <h3>流程六步</h3>
+        <ol class="steps">
+          <li>定 OSR：median Δt → M_native / M_effective，一致且 ≥2 才接受</li>
+          <li>重采样到 <span class="kbd">t = t0 + k/(M·R_s)</span></li>
+          <li>再生 PRBS + Gray 映射，<strong>xcorr 对齐</strong>（负峰翻极性）</li>
+          <li>折叠 <span class="kbd">Y</span> + 设计 <span class="kbd">X</span> → <span class="kbd">P̂ = YXᵀ(XXᵀ)⁻¹</span></li>
+          <li>由 <span class="kbd">P3</span> 解 FFE，注入 DFE 目标</li>
+          <li>出指标与图：SNDR / RLM / TF / 眼宽</li>
+        </ol>
+      </div>
+      <div>
+        <h3>三条纪律</h3>
+        <ul>
+          <li><strong>不猜</strong>：OSR、极性、参数约束不满足就报错；</li>
+          <li><strong>不掩盖</strong>：奇异不用伪逆糊过去，差异登记为 known deviation；</li>
+          <li><strong>可验证</strong>：同一份波形 + golden 逐字段比对，1e-9 才算过。</li>
+        </ul>
+        <div class="eli5" style="margin-top:10px"><span class="lbl">最后一句话</span><p>这套算法的本质只有一句：<em>用已知的符号序列，把未知的脉冲响应「解」出来，再据此设计均衡器并量化剩余损伤。</em></p></div>
+        <div class="chips" style="margin-top:10px"><span class="chip acc">问题 → 联系我</span><span class="chip">想加章节/改受众层？直接说</span></div>
+      </div>
+    </div>
+  </div>
+  <div class="sec">第 7 章 · 上手</div>
+  <div class="num">49</div>
+</section>

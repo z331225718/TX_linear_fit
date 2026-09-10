@@ -1,0 +1,272 @@
+<section class="slide" data-sec="第3章 线性拟合">
+  <div class="body divider">
+    <div class="big">03</div>
+    <h2>线性拟合核心</h2>
+    <ul>
+      <li>把长波形折成矩阵 Y，把符号排成设计矩阵 X</li>
+      <li>正规方程推导：P̂ = YXᵀ(XXᵀ)⁻¹</li>
+      <li>从 P 到 p[k]：列优先展开与脉冲指标</li>
+    </ul>
+  </div>
+  <div class="sec">第 3 章 · 线性拟合</div>
+  <div class="num">16</div>
+</section>
+
+<section class="slide" data-sec="第3章 线性拟合">
+  <div class="body">
+    <div class="kicker">第一步</div>
+    <h2>把长波形折叠成矩阵 Y</h2>
+    <div class="two-6-4">
+      <div>
+        <div class="eli5"><span class="lbl">人话</span><p>把一条长录音按「每小节」剪开，一摞叠起来。第 m 行就是每个小节里的第 m 个采样点 —— 这样「同一相位」的样本排到同一行，方便逐相位比较。</p></div>
+        <div class="formula">Y[m, n] = y[n·M + m]
+
+0 ≤ m &lt; M,   0 ≤ n &lt; N
+shape(Y) = M × N</div>
+        <p><strong>M</strong> = 每 UI 采样数（行 = 相位），<strong>N</strong> = 参与拟合的符号数（列 = 第几个符号）。</p>
+        <p>第 n 列正是第 n 个符号周期内那 M 个采样点，顺序与波形一致。</p>
+      </div>
+      <div>
+        <svg viewBox="0 0 380 300" width="100%" height="300" role="img" aria-label="波形折叠">
+          <g font-family="Segoe UI, sans-serif" font-size="12.5" fill="#c3d0e6">
+            <text x="4" y="14" fill="#8fa3c2">波形 y[k]（N_s = M·N 点）</text>
+            <polyline points="4,52 20,44 36,60 52,40 68,58 84,42 100,62 116,44 132,58 148,42 164,60 180,44 196,58 212,42 228,60 244,44 260,58 276,42 292,60 308,44 324,58 340,42 356,60" fill="none" stroke="#38bdf8" stroke-width="2"/>
+            <line x1="4" y1="80" x2="370" y2="80" stroke="#5b7292" stroke-dasharray="4 4"/>
+            <text x="4" y="98" fill="#8fa3c2">按 M 点切分 →</text>
+            <rect x="24" y="118" width="60" height="34" rx="5" fill="#16233c" stroke="#f59e0b" stroke-opacity=".5"/><text x="54" y="139" text-anchor="middle" font-size="11.5">第 0 符号</text>
+            <rect x="94" y="118" width="60" height="34" rx="5" fill="#16233c" stroke="#f59e0b" stroke-opacity=".5"/><text x="124" y="139" text-anchor="middle" font-size="11.5">第 1 符号</text>
+            <rect x="164" y="118" width="60" height="34" rx="5" fill="#16233c" stroke="#f59e0b" stroke-opacity=".5"/><text x="194" y="139" text-anchor="middle" font-size="11.5">第 2 符号</text>
+            <text x="238" y="139" fill="#8fa3c2">…</text>
+            <text x="4" y="180" fill="#8fa3c2">→ 叠成矩阵 Y（M 行 × N 列）</text>
+            <rect x="94" y="196" width="120" height="82" rx="6" fill="#1b2946" stroke="#34d399" stroke-opacity=".55"/>
+            <line x1="94" y1="224" x2="214" y2="224" stroke="#34d399" stroke-opacity=".3"/>
+            <line x1="94" y1="250" x2="214" y2="250" stroke="#34d399" stroke-opacity=".3"/>
+            <line x1="154" y1="196" x2="154" y2="278" stroke="#34d399" stroke-opacity=".3"/>
+            <text x="124" y="214" text-anchor="middle" font-size="11.5" fill="#dbeafe">m=0</text>
+            <text x="184" y="214" text-anchor="middle" font-size="11.5" fill="#dbeafe">m=0</text>
+            <text x="124" y="242" text-anchor="middle" font-size="11.5" fill="#dbeafe">m=1</text>
+            <text x="184" y="242" text-anchor="middle" font-size="11.5" fill="#dbeafe">m=1</text>
+            <text x="124" y="270" text-anchor="middle" font-size="11.5" fill="#dbeafe">m=M−1</text>
+            <text x="184" y="270" text-anchor="middle" font-size="11.5" fill="#dbeafe">m=M−1</text>
+            <text x="124" y="294" text-anchor="middle" font-size="11" fill="#8fa3c2">n=0</text>
+            <text x="184" y="294" text-anchor="middle" font-size="11" fill="#8fa3c2">n=1</text>
+          </g>
+        </svg>
+      </div>
+    </div>
+    <div class="code" style="max-height:80px"><span class="cmt"># 代码落点</span>
+<b>fit_pulse_response.py</b>  Y = data[:M*N].reshape(M, N, order='F')   <span class="cmt"># 列优先 = MATLAB reshape</span></div>
+  </div>
+  <div class="sec">第 3 章 · 线性拟合</div>
+  <div class="num">17</div>
+</section>
+
+<section class="slide" data-sec="第3章 线性拟合">
+  <div class="body">
+    <div class="kicker">第二步</div>
+    <h2>设计矩阵 X：每一行是「延迟 r 个 UI 的符号」</h2>
+    <div class="two-6-4">
+      <div>
+        <div class="formula">X[r, n] = x[ mod(n + D_p − r, N) ]     0 ≤ r &lt; N_p
+X[N_p, n] = 1                          常数项 → 吸收直流偏置
+shape(X) = (N_p + 1) × N</div>
+        <ul>
+          <li><span class="kbd">r = 0</span> 主光标，<span class="kbd">r &lt; D_p</span> 前游标，<span class="kbd">r &gt; D_p</span> 后游标；</li>
+          <li>最后一行全 1：允许拟合出一个直流/共模偏移；</li>
+          <li><span class="kbd">mod</span> 循环移位：码型是周期的，末尾自然接回开头。</li>
+        </ul>
+        <div class="eli5"><span class="lbl">人话</span><p>这一行问「<em>多少 UI 之前的那个符号</em>」，那一列问「<em>第几个时刻</em>」。行 × 列就是「每个时刻、每个延迟位置上的符号值」。</p></div>
+      </div>
+      <div>
+        <svg viewBox="0 0 360 250" width="100%" height="250" role="img" aria-label="设计矩阵">
+          <g font-family="Segoe UI, sans-serif" font-size="12" fill="#c3d0e6">
+            <rect x="70" y="20" width="210" height="186" rx="6" fill="#1b2946" stroke="#f59e0b" stroke-opacity=".55"/>
+            <g stroke="#f59e0b" stroke-opacity=".22">
+              <line x1="70" y1="46" x2="280" y2="46"/><line x1="70" y1="72" x2="280" y2="72"/>
+              <line x1="70" y1="98" x2="280" y2="98"/><line x1="70" y1="124" x2="280" y2="124"/>
+              <line x1="70" y1="150" x2="280" y2="150"/><line x1="70" y1="180" x2="280" y2="180"/>
+              <line x1="122" y1="20" x2="122" y2="206"/><line x1="175" y1="20" x2="175" y2="206"/><line x1="228" y1="20" x2="228" y2="206"/>
+            </g>
+            <text x="44" y="38" text-anchor="end" font-size="11.5">r=0 main</text>
+            <text x="44" y="64" text-anchor="end" font-size="11.5">r=1</text>
+            <text x="44" y="90" text-anchor="end" font-size="11.5">…</text>
+            <text x="44" y="118" text-anchor="end" font-size="11.5">r=N_p−1</text>
+            <text x="44" y="146" text-anchor="end" font-size="11.5" fill="#7dd3fc">r=N_p</text>
+            <text x="175" y="238" text-anchor="middle" font-size="11.5" fill="#8fa3c2">n = 0 … N−1（符号索引）</text>
+            <text x="288" y="118" font-size="11.5" fill="#8fa3c2">延迟后的符号</text>
+            <text x="288" y="146" font-size="11.5" fill="#7dd3fc">全 1 → 直流</text>
+          </g>
+        </svg>
+      </div>
+    </div>
+    <div class="code" style="max-height:80px"><span class="cmt"># 代码落点</span>
+<b>fit_pulse_response.py</b>  xr = concat(decisions[D_p:], decisions[:D_p])；X[r] = roll(xr, r)；X[N_p] = 1</div>
+  </div>
+  <div class="sec">第 3 章 · 线性拟合</div>
+  <div class="num">18</div>
+</section>
+
+<section class="slide" data-sec="第3章 线性拟合">
+  <div class="body">
+    <div class="kicker">第三步</div>
+    <h2>三行推导：从代价函数到正规方程</h2>
+    <div class="two-6-4">
+      <div>
+        <div class="formula">模型      Y ≈ P·X,     shape(P) = M × (N_p+1)
+
+代价      J(P) = ‖Y − PX‖²_F
+               = tr[ (Y − PX)(Y − PX)ᵀ ]
+
+求梯度    ∂J/∂P = 2( PXXᵀ − YXᵀ )
+
+令梯度为零（XXᵀ 可逆）：
+          P̂ = Y·Xᵀ·(X·Xᵀ)⁻¹</div>
+        <p style="margin-top:10px">这是标准最小二乘的<strong>正规方程解</strong>：把 <span class="kbd">N</span> 个符号周期里所有相位的数据一起用上，对 <span class="kbd">N_p+1</span> 个未知量做一次全局拟合。</p>
+      </div>
+      <div>
+        <div class="card"><h3>形状检查（最实用的自查）</h3>
+          <ul>
+            <li><span class="kbd">Y</span>: M × N</li>
+            <li><span class="kbd">Xᵀ</span>: N × (N_p+1)</li>
+            <li><span class="kbd">YXᵀ</span>: M × (N_p+1)</li>
+            <li><span class="kbd">XXᵀ</span>: (N_p+1) × (N_p+1)</li>
+            <li><span class="kbd">P̂</span>: M × (N_p+1) ✓ 与第一项一致</li>
+          </ul>
+        </div>
+        <div class="eli5" style="margin-top:12px"><span class="lbl">人话</span><p>直觉上：把「每个相位、每个延迟位置」的贡献一次性解出来。矩阵乘法只是在替我们把 N 个方程同时最小化。</p></div>
+      </div>
+    </div>
+    <div class="code" style="max-height:80px"><span class="cmt"># 代码落点</span>
+<b>fit_pulse_response.py</b>  P = (Y @ X.T) @ inv(X @ X.T)   <span class="cmt"># 保持与 golden 相同的运算顺序</span></div>
+  </div>
+  <div class="sec">第 3 章 · 线性拟合</div>
+  <div class="num">19</div>
+</section>
+
+<section class="slide" data-sec="第3章 线性拟合">
+  <div class="body">
+    <div class="kicker">数值策略</div>
+    <h2>为什么坚持显式求逆，而不是换伪逆</h2>
+    <div class="two">
+      <div class="card"><h3>现在的做法</h3><ul>
+        <li>显式写正规方程 <span class="kbd">P̂ = YXᵀ(XXᵀ)⁻¹</span>；</li>
+        <li>严格矩阵求逆，保持与参考实现相同的求解顺序；</li>
+        <li><span class="kbd">XXᵀ</span> 奇异时<strong>直接报错</strong>，不静默换成 <span class="kbd">pinv</span>。</li>
+      </ul></div>
+      <div class="card"><h3>为什么</h3><ul>
+        <li><strong>可解释</strong>：结果与标准/参考工具一致，异常可追溯到具体参数；</li>
+        <li><strong>可复现</strong>：与 MATLAB golden 逐项对齐到 1e-9 量级；</li>
+        <li><strong>不掩盖问题</strong>：伪逆会给出「看起来能用」但物理无意义的脉冲与抽头。</li>
+      </ul></div>
+    </div>
+    <div class="warn"><span class="lbl">失败即信号</span><p>奇异/病态通常意味着：符号率或码型填错、OSR 不对、拟合窗口太短、或 FFE tap 比脉冲约束还多。报错比给一个漂亮但错误的数字更有价值。</p></div>
+    <div class="chips">
+      <span class="chip acc">总设计原则：不猜测、不静默 fallback、不为了「跑通」而放宽语义</span>
+    </div>
+  </div>
+  <div class="sec">第 3 章 · 线性拟合</div>
+  <div class="num">20</div>
+</section>
+
+<section class="slide" data-sec="第3章 线性拟合">
+  <div class="body">
+    <div class="kicker">第四步</div>
+    <h2>拟合波形、残差，以及「列优先」展开</h2>
+    <div class="two-6-4">
+      <div>
+        <div class="formula">拟合波形   Ŷ = P̂·X
+残差       E = Ŷ − Y          （拟合值 − 实测值）
+
+列优先展开（0-based）：
+  p[ r·M + m ] = P̂[m, r],   0 ≤ m &lt; M, 0 ≤ r &lt; N_p
+  e[ k ]       = E 的列优先展开
+  l[ k ]       = Ŷ 的列优先展开</div>
+        <p style="margin-top:10px">长度：<span class="kbd">p</span> 为 <span class="kbd">M·N_p</span>，<span class="kbd">e</span> 与 <span class="kbd">l</span> 为 <span class="kbd">M·N</span>。</p>
+      </div>
+      <div>
+        <svg viewBox="0 0 330 240" width="100%" height="240" role="img" aria-label="列优先展开">
+          <g font-family="Segoe UI, sans-serif" font-size="12" fill="#c3d0e6">
+            <rect x="20" y="26" width="96" height="80" rx="6" fill="#1b2946" stroke="#38bdf8" stroke-opacity=".5"/>
+            <line x1="20" y1="66" x2="116" y2="66" stroke="#38bdf8" stroke-opacity=".25"/>
+            <line x1="68" y1="26" x2="68" y2="106" stroke="#38bdf8" stroke-opacity=".25"/>
+            <text x="44" y="50" text-anchor="middle" font-size="11">P̂[0,0]</text><text x="92" y="50" text-anchor="middle" font-size="11">P̂[0,1]</text>
+            <text x="44" y="90" text-anchor="middle" font-size="11">P̂[1,0]</text><text x="92" y="90" text-anchor="middle" font-size="11">P̂[1,1]</text>
+            <text x="68" y="122" text-anchor="middle" font-size="11" fill="#8fa3c2">P̂（M 行 × N_p 列）</text>
+            <text x="150" y="70" fill="#34d399" font-size="16">→</text>
+            <rect x="184" y="20" width="126" height="36" rx="6" fill="#070d19" stroke="#34d399" stroke-opacity=".5"/>
+            <text x="247" y="43" text-anchor="middle" font-size="11.5" fill="#d1fae5">p[0] p[1] p[2] p[3] …</text>
+            <text x="247" y="74" text-anchor="middle" font-size="11" fill="#8fa3c2">先走完第 0 列，再走第 1 列</text>
+            <text x="20" y="160" fill="#f59e0b" font-size="12">与 MATLAB reshape 完全一致</text>
+            <text x="20" y="182" fill="#8fa3c2" font-size="12">这一步是最常见的移植 bug：</text>
+            <text x="20" y="202" fill="#8fa3c2" font-size="12">用行优先展开会让相位整体错位，</text>
+            <text x="20" y="222" fill="#8fa3c2" font-size="12">指标随之全面偏移。</text>
+          </g>
+        </svg>
+      </div>
+    </div>
+    <div class="code" style="max-height:80px"><span class="cmt"># 代码落点</span>
+<b>fit_pulse_response.py</b>  e = E.reshape(-1, order='F')   /   p = P[:, :N_p].reshape(-1, order='F')</div>
+  </div>
+  <div class="sec">第 3 章 · 线性拟合</div>
+  <div class="num">21</div>
+</section>
+
+<section class="slide" data-sec="第3章 线性拟合">
+  <div class="body">
+    <div class="kicker">指标</div>
+    <h2>脉冲的四组核心数字</h2>
+    <div class="two">
+      <div>
+        <div class="formula">稳态电压   v_f    = (1/M) · Σ p[k]
+脉冲峰值   p_max  = max p[k]
+峰值比     r_peak = p_max / v_f</div>
+        <p style="margin-top:8px"><span class="kbd">v_f</span> 是「把所有相位的脉冲加起来平均」，可理解为稳态幅度；理想情况下主峰附近的平均值应接近它。</p>
+        <div class="formula" style="margin-top:12px">残差 RMS（中央 80% 样本集 I_80）
+e_RMS,fit = √{ (1/|I_80|) · Σ e[k]² },  k ∈ I_80
+
+拟合 SNDR
+SNDR_fit[dB] = 20 log₁₀( p_max / e_RMS,fit )</div>
+      </div>
+      <div>
+        <div class="card"><h3>为什么要掐掉两端各 10%？</h3><p>记录首尾常有采集窗、触发与循环移位造成的不连续。中央 80% 更能代表稳态拟合质量。</p></div>
+        <div class="warn" style="margin-top:12px"><span class="lbl">一个必须知道的实现细节</span><p>报告字段 <span class="kbd">eRms</span> 保存的是<strong>主采样相位</strong>残差的中央 80% RMS；而 <span class="kbd">eRmsRatio</span> 与 <span class="kbd">SNDR</span> 用的是<strong>全速率</strong>残差 RMS。所以<em>不能</em>用报告里的 <span class="kbd">p_max / eRms</span> 反算出同一个 SNDR —— 这是刻意保留的历史行为，不是 bug。</p></div>
+        <div class="code" style="margin-top:12px;max-height:100px"><span class="cmt"># 代码落点</span>
+<b>fit_pulse_response.py</b>  vf / pmax / pulsePeakRatio / eRms / eRmsRatio / SNDR</div>
+      </div>
+    </div>
+  </div>
+  <div class="sec">第 3 章 · 线性拟合</div>
+  <div class="num">22</div>
+</section>
+
+<section class="slide" data-sec="第3章 线性拟合">
+  <div class="body">
+    <div class="kicker">指标</div>
+    <h2>残余 ISI：SNR_ISI 到底在量什么</h2>
+    <div class="two-6-4">
+      <div>
+        <div class="formula">把脉冲按主峰相位抽样：p_s[i] = p[i_peak·M 处的采样]
+
+i_peak = arg max_i p_s[i]
+
+忽略主峰之后的前 10 个 post-cursor，用其余尾部能量：
+
+                        p_s[i_peak]
+SNR_ISI[dB] = 20 log₁₀ ─────────────────────────
+                        √{ Σ p_s[i]² , i = i_peak+11 … N_p−1 }</div>
+        <ul style="margin-top:10px">
+          <li>它<strong>只</strong>描述有限拟合窗口末端残余的 ISI，<strong>不是</strong>通用噪声 SNR；</li>
+          <li>跳过 10 个 post-cursor 是为了不和 FFE/DFE 要处理的部分重复计分；</li>
+          <li>窗口太短（<span class="kbd">i_peak + 11 &gt; N_p</span>）时该指标<strong>返回 NaN 并打印警告</strong>，而不是编一个数。</li>
+        </ul>
+      </div>
+      <div>
+        <div class="imgbox"><img src="{{IMG_FFE_RESP}}" alt="FFE 传递函数"></div>
+        <figcaption>均衡后频响：可见高频提升（boost）与 Nyquist 点</figcaption>
+        <div class="eli5" style="margin-top:12px"><span class="lbl">人话</span><p>前面的游标由 FFE/DFE 负责；SNR_ISI 关心的是「再往后那些没人管的小尾巴有多脏」。</p></div>
+      </div>
+    </div>
+  </div>
+  <div class="sec">第 3 章 · 线性拟合</div>
+  <div class="num">23</div>
+</section>
