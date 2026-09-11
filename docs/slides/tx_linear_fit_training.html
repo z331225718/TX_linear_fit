@@ -19,12 +19,13 @@
   #progress{position:fixed;top:0;left:0;height:3px;width:0;background:linear-gradient(90deg,var(--accent),var(--accent2));z-index:50;transition:width .18s ease}
   #stageWrap{position:fixed;inset:0;display:flex;align-items:center;justify-content:center}
   #stage{width:1280px;height:720px;position:relative;transform-origin:center center;flex:0 0 auto}
-  .slide{position:absolute;inset:0;padding:44px 56px 56px;background:
+  .slide{position:absolute;inset:0;padding:38px 56px 78px;background:
       radial-gradient(1100px 520px at 88% -12%,rgba(56,189,248,.13),transparent 60%),
       radial-gradient(900px 460px at -8% 108%,rgba(245,158,11,.10),transparent 60%),
       linear-gradient(180deg,var(--bg2),var(--bg));
       display:none;overflow:hidden}
   .slide.active{display:block}
+  #stage.measuring .slide{display:block!important;visibility:hidden}
   .slide::after{content:"";position:absolute;inset:0;background-image:linear-gradient(var(--grid) 1px,transparent 1px),linear-gradient(90deg,var(--grid) 1px,transparent 1px);background-size:64px 64px;pointer-events:none;opacity:.5}
   .kicker{font-size:15px;letter-spacing:.16em;text-transform:uppercase;color:var(--accent);font-weight:700;margin-bottom:8px}
   h1{font-size:54px;line-height:1.12;margin:0 0 14px;font-weight:800;letter-spacing:-.01em}
@@ -35,7 +36,7 @@
   li{margin-bottom:6px}
   strong{color:var(--ink)}
   em{color:var(--accent2);font-style:normal;font-weight:600}
-  .body{position:relative;z-index:2}
+  .body{position:relative;z-index:2;transform-origin:left top}
   .two{display:grid;grid-template-columns:1fr 1fr;gap:22px}
   .two-6-4{display:grid;grid-template-columns:1.45fr 1fr;gap:22px}
   .three{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
@@ -51,7 +52,7 @@
   .code{background:#070d19;border:1px solid var(--line);border-radius:12px;padding:14px 16px;font-family:var(--mono);font-size:15px;line-height:1.6;color:#cfe3ff;white-space:pre;overflow:auto;max-height:300px}
   .code b{color:var(--accent);font-weight:600}
   .code .cmt{color:#6f86a8}
-  .formula{background:#070d19;border:1px solid var(--line);border-radius:12px;padding:16px 20px;font-family:var(--mono);font-size:19px;line-height:1.85;color:#dbeafe;white-space:pre;overflow:auto}
+  .formula{background:#070d19;border:1px solid var(--line);border-radius:12px;padding:14px 18px;font-family:var(--mono);font-size:18.5px;line-height:1.7;color:#dbeafe;white-space:pre;overflow:auto}
   .formula em{color:var(--accent2);font-style:normal}
   table{border-collapse:collapse;width:100%;font-size:15.5px}
   th,td{border-bottom:1px solid var(--line);padding:7px 10px;text-align:left;color:var(--ink2)}
@@ -67,8 +68,8 @@
   .sub{font-size:20px;color:var(--ink2);max-width:1000px}
   .meta{margin-top:26px;display:flex;gap:26px;flex-wrap:wrap;font-family:var(--mono);font-size:14px;color:var(--muted)}
   .meta b{color:var(--accent)}
-  .num{position:absolute;right:56px;bottom:18px;font-family:var(--mono);font-size:13px;color:var(--muted);z-index:3}
-  .sec{position:absolute;left:56px;bottom:18px;font-family:var(--mono);font-size:13px;color:var(--muted);z-index:3}
+  .num{position:absolute;right:56px;bottom:16px;font-family:var(--mono);font-size:13px;color:var(--muted);z-index:3;background:rgba(10,17,32,.55);padding:2px 8px;border-radius:6px}
+  .sec{position:absolute;left:56px;bottom:16px;font-family:var(--mono);font-size:13px;color:var(--muted);z-index:3;background:rgba(10,17,32,.55);padding:2px 8px;border-radius:6px}
   .divider{display:flex;flex-direction:column;justify-content:center;height:100%}
   .divider .big{font-size:96px;font-weight:800;color:rgba(56,189,248,.18);line-height:1;font-family:var(--mono)}
   .divider h2{font-size:44px}
@@ -76,7 +77,7 @@
   figure{margin:0}
   figcaption{font-size:13.5px;color:var(--muted);margin-top:6px;text-align:center}
   .imgbox{background:#070d19;border:1px solid var(--line);border-radius:12px;padding:8px}
-  .imgbox img{width:100%;display:block;border-radius:8px}
+  .imgbox img{max-height:200px;width:auto;max-width:100%;display:block;margin:0 auto;border-radius:8px}
   svg{display:block;margin:0 auto}
   .steps{counter-reset:s;list-style:none;padding:0}
   .steps li{counter-increment:s;position:relative;padding-left:44px;margin-bottom:10px;font-size:17px}
@@ -270,7 +271,7 @@
   <div class="body">
     <div class="kicker">边界</div>
     <h2>这是诊断工具，不是一致性测试系统</h2>
-    <div class="warn"><span class="lbl">必须说清楚</span><p>本工具是波形分析与算法验证工具。<span class="kbd">neutral</span> / <span class="kbd">ieee8023</span> / <span class="kbd">oif</span> 只改变报告里的语义标签，<strong>不会</strong>自动选择协议参数、不会加限值、不会给 pass/fail。</p></div>
+    <div class="warn"><span class="lbl">必须说清楚</span><p>本工具是波形分析与算法验证工具，<strong>不是认证系统</strong>。报告可带三种<strong>语义标签</strong>：<span class="kbd">neutral</span>＝不声明按哪家协议口径解读（默认）、<span class="kbd">ieee8023</span>＝按 IEEE 802.3 口径标注、<span class="kbd">oif</span>＝按 OIF CEI 口径标注。标签<strong>只改报告上的文字说明</strong>：不会自动选择协议参数、不会加限值、也不会给出 pass/fail 结论。</p></div>
     <div class="two">
       <div class="card"><h3>它能做</h3><ul>
         <li>发送端波形诊断与参数敏感性分析</li>
@@ -340,12 +341,14 @@ Data,<span class="cmt">&lt;-- 同样含尾随空格</span>
   <div class="body">
     <div class="kicker">OSR 判定</div>
     <h2>M（每 UI 采样数）从哪里来</h2>
-    <div class="eli5"><span class="lbl">人话</span><p>要知道「一个符号被切成了几段」，先量相邻采样点的平均间距，再用符号率换算。就像知道每格胶片多长、每秒放几格，就能算出动作被切成几张。</p></div>
+    <div class="eli5"><span class="lbl">人话</span><p>先量出「相邻采样点平均隔多久」，再用符号率换算：一个符号被切成了几段。</p></div>
     <div class="two-6-4">
       <div>
-        <div class="formula">Δt̃          = median{ t[k+1] − t[k] }      0 ≤ k &lt; N_s−1
-M_native    = 1 / (R_s · Δt̃)                局部网格
-M_effective = (N_s − 1) / { R_s · [t[N_s−1] − t[0]] }   整段平均</div>
+        <div class="formula"><span style="text-decoration:overline">t</span> = 相邻采样间隔的中位数（平均采样间隔）
+     <span style="text-decoration:overline">t</span> = median{ t[k+1] − t[k] },  0 ≤ k &lt; N_s−1
+
+M_native    = 1 / (R_s · <span style="text-decoration:overline">t</span>)                           局部采样密度
+M_effective = (N_s − 1) / { R_s · [t[N_s−1] − t[0]] }   整段平均采样密度</div>
         <h3>自动模式接受条件（全部满足）</h3>
         <ul>
           <li><span class="kbd">M_native</span> 与 <span class="kbd">M_effective</span> 取整后<strong>一致</strong>；</li>
@@ -354,12 +357,10 @@ M_effective = (N_s − 1) / { R_s · [t[N_s−1] − t[0]] }   整段平均</div
         </ul>
       </div>
       <div>
-        <div class="card"><h3>为什么不满足就报错？</h3><p>两者不一致通常意味着：符号率填错、时间单位错（ns 当 s）、导出丢点、或记录太短。<strong>猜一个 OSR 会让后面所有指标失去意义</strong>，所以宁可直接失败。</p></div>
-        <div class="card" style="margin-top:12px"><h3>丢点诊断</h3><p>用 <span class="kbd">Δt / Δt̃</span> 的整数倍估计缺失采样比例，写进报告的 <span class="kbd">missing_sample_fraction</span>。</p></div>
-        <div class="code" style="margin-top:12px;max-height:150px"><span class="cmt"># 代码落点</span>
-<b>application.py</b>
-  resolve_osr()            —— 判定与诊断
-  validate_fit_config()    —— 参数校验</div>
+        <div class="card"><h3>为什么不满足就报错？</h3><p>两者不一致通常意味着：符号率填错、时间单位错（ns 当 s）、导出丢点、记录太短。<strong>猜一个 OSR，后面所有指标都失去意义</strong>，所以宁可直接失败。</p></div>
+        <div class="card" style="margin-top:10px"><h3>丢点诊断</h3><p>用 <span class="kbd">Δt / 平均间隔</span> 的整数倍估计缺失采样比例，写进报告的 <span class="kbd">missing_sample_fraction</span>。</p></div>
+        <div class="code" style="margin-top:10px;max-height:120px"><span class="cmt"># 代码落点</span>
+<b>application.py</b>  resolve_osr() / validate_fit_config()</div>
       </div>
     </div>
   </div>
@@ -410,18 +411,14 @@ M_effective = (N_s − 1) / { R_s · [t[N_s−1] − t[0]] }   整段平均</div
       </div>
       <div>
         <h3>PRBS 多项式与周期</h3>
-        <div class="formula">PRBS13: G(x) = 1 + x + x² + x¹² + x¹³
-周期 = 2¹³ − 1 = 8191
-
-PRBS7 : x⁷ + x⁶ + 1       周期 127
-PRBS15: x¹⁵ + x¹⁴ + 1     周期 32767
-PRBS31: x³¹ + x²⁸ + 1     （完整周期过长，CLI 需限长）</div>
-        <div class="eli5"><span class="lbl">人话</span><p>PRBS 是一串「看起来随机、其实完全可复现」的比特。因为可复现，我们才能在电脑里生成一模一样的序列去和波形对齐。</p></div>
+        <div class="formula">PRBS13: G(x) = 1 + x + x² + x¹² + x¹³,  周期 = 2¹³ − 1 = 8191
+其它：PRBS7 (127) / PRBS15 (32767) / PRBS31（需限长）</div>
+        <div class="eli5"><span class="lbl">人话</span><p>PRBS 看起来随机，但完全可复现 —— 所以能在电脑里生成同一条序列去对齐波形。</p></div>
       </div>
     </div>
-    <div class="warn"><span class="lbl">协议边界</span><p>PRBS13 多项式与 Gray 映射与 OIF CEI-05.3 的 QPRBS13-CEI 一致，但正式合规仍需核对规范要求的发生器方向、种子、bit pairing 与序列示例。</p></div>
-    <div class="code" style="max-height:96px"><span class="cmt"># 代码落点</span>
-<b>pattern.py</b>  gen_prbs(s, taps, num_bits) / pam4_levels(bits) / nrz_levels(bits) / gen_data_pattern(...)</div>
+    <div class="warn"><span class="lbl">协议边界</span><p>PRBS13 多项式与 Gray 映射与 OIF CEI-05.3 的 QPRBS13-CEI 一致；正式合规仍需核对发生器方向、种子与 bit pairing。</p></div>
+    <div class="code" style="max-height:76px"><span class="cmt"># 代码落点</span>
+<b>pattern.py</b>  gen_prbs() / pam4_levels() / nrz_levels() / gen_data_pattern()</div>
   </div>
   <div class="sec">第 2 章 · 预处理</div>
   <div class="num">12</div>
@@ -611,12 +608,8 @@ shape(X) = (N_p + 1) × N</div>
     <div class="two-6-4">
       <div>
         <div class="formula">模型      Y ≈ P·X,     shape(P) = M × (N_p+1)
-
-代价      J(P) = ‖Y − PX‖²_F
-               = tr[ (Y − PX)(Y − PX)ᵀ ]
-
+代价      J(P) = ‖Y − PX‖²_F = tr[ (Y − PX)(Y − PX)ᵀ ]
 求梯度    ∂J/∂P = 2( PXXᵀ − YXᵀ )
-
 令梯度为零（XXᵀ 可逆）：
           P̂ = Y·Xᵀ·(X·Xᵀ)⁻¹</div>
         <p style="margin-top:10px">这是标准最小二乘的<strong>正规方程解</strong>：把 <span class="kbd">N</span> 个符号周期里所有相位的数据一起用上，对 <span class="kbd">N_p+1</span> 个未知量做一次全局拟合。</p>
@@ -1108,17 +1101,11 @@ SNDR_fit[dB] = 10 log₁₀ ───────────
     <h2>测量派生传递函数：从脉冲反推频响</h2>
     <div class="two-6-4">
       <div>
-        <div class="formula">① 造理想脉冲 p_ideal：幅度 max|p|、宽 1 UI、
-   上升/下降时间 1 fs（数值上近似理想方波）
-
-② P(f)       = DFT{ p[k] }
-   P_ideal(f) = DFT{ p_ideal[k] }
-
-③ H̃(f) = |P(f)| / |P_ideal(f)|
-   H(f)  = H̃(f) / H̃(0),   H(0) = 1
-
-④ Nyquist : H_Nq[dB] = 20 log₁₀ |H(R_s/2)|
-⑤ BW 3dB  : 第一个满足 20log₁₀|H(f)| ≤ −3 的频点</div>
+        <div class="formula">① 理想脉冲 p_ideal：幅度 max|p|、宽 1 UI、上升/下降 1 fs
+② P(f) = DFT{p[k]},   P_ideal(f) = DFT{p_ideal[k]}
+③ H̃(f) = |P(f)| / |P_ideal(f)|,   H(f) = H̃(f) / H̃(0)
+④ Nyquist：H_Nq[dB] = 20 log₁₀ |H(R_s/2)|
+⑤ BW 3dB：第一个 20log₁₀|H(f)| ≤ −3 的频点</div>
         <p style="margin-top:8px">理想脉冲频谱的零点会让分母趋零，程序<strong>先剔除近零频点再线性插值</strong>补回分母。</p>
       </div>
       <div>
@@ -1138,18 +1125,12 @@ SNDR_fit[dB] = 10 log₁₀ ───────────
     <h2>95% 与 99% 眼宽：为什么不能只数过零点</h2>
     <div class="two-6-4">
       <div>
-        <div class="formula">① 相邻样本异号时线性插值求过零相位：
+        <div class="formula">① 过零相位（线性插值）：
    φ[i] = mod( k − y[k] / (y[k+1] − y[k]), M )
-
-② 圆均值求 crossing 中心：
-   φ_mean = [M/2π]·arg{ Σ exp( j·2π·φ[i]/M ) }
-
-③ 展开到 [−M/2, M/2)：
-   δ[i] = mod( φ[i] − φ_mean + M/2, M ) − M/2
-
-④ 取分位点（默认中央 99%）：
-   Δ = Q_0.995{δ} − Q_0.005{δ}
-   W = clip( 1 − Δ/M, 0, 1 )   [UI]</div>
+② 圆均值求中心：φ_mean = [M/2π]·arg{ Σ exp( j·2π·φ[i]/M ) }
+③ 展开到 ±半 UI：δ[i] = mod( φ[i] − φ_mean + M/2, M ) − M/2
+④ 中央 99% 跨度：Δ = Q_0.995{δ} − Q_0.005{δ}
+⑤ 眼宽：W = clip( 1 − Δ/M, 0, 1 )   [UI]</div>
         <p style="margin-top:8px">53.125 GBd 时 1 UI ≈ 18.824 ps；4 ps ≈ 0.2125 UI。</p>
       </div>
       <div>
@@ -1466,7 +1447,7 @@ D_p + N_DFE &lt; N_p
       <div>
         <h3>流程六步</h3>
         <ol class="steps">
-          <li>定 OSR：median Δt → M_native / M_effective，一致且 ≥2 才接受</li>
+          <li>定 OSR：相邻采样间隔中位数 → M_native / M_effective，一致且 ≥2 才接受</li>
           <li>重采样到 <span class="kbd">t = t0 + k/(M·R_s)</span></li>
           <li>再生 PRBS + Gray 映射，<strong>xcorr 对齐</strong>（负峰翻极性）</li>
           <li>折叠 <span class="kbd">Y</span> + 设计 <span class="kbd">X</span> → <span class="kbd">P̂ = YXᵀ(XXᵀ)⁻¹</span></li>
@@ -1547,6 +1528,25 @@ D_p + N_DFE &lt; N_p
     }
   }
 
+  function autoscale() {
+    var avail = 720 - 38 - 78 - 24;
+    stage.classList.add('measuring');
+    for (var i = 0; i < slides.length; i++) {
+      var b = slides[i].querySelector('.body');
+      if (!b) { continue; }
+      if (b.classList.contains('divider') || b.classList.contains('title-slide')) {
+        slides[i].setAttribute('data-scale', '1.0000');
+        continue;
+      }
+      var h = b.scrollHeight;
+      var s = h > avail ? (avail / h) : 1;
+      b.style.transform = s < 0.999 ? 'scale(' + s.toFixed(4) + ')' : 'none';
+      slides[i].setAttribute('data-content-px', String(h));
+      slides[i].setAttribute('data-scale', s.toFixed(4));
+    }
+    stage.classList.remove('measuring');
+  }
+
   function toggleToc() { toc.classList.toggle('on'); }
 
   function fullscreen() {
@@ -1578,6 +1578,7 @@ D_p + N_DFE &lt; N_p
 
   buildToc();
   renumber();
+  autoscale();
   fit();
   var h = parseInt((window.location.hash || '#1').replace(/#/g, ''), 10);
   show(isNaN(h) ? 0 : h - 1, false);

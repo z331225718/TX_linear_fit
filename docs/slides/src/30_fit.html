@@ -113,12 +113,8 @@ shape(X) = (N_p + 1) × N</div>
     <div class="two-6-4">
       <div>
         <div class="formula">模型      Y ≈ P·X,     shape(P) = M × (N_p+1)
-
-代价      J(P) = ‖Y − PX‖²_F
-               = tr[ (Y − PX)(Y − PX)ᵀ ]
-
+代价      J(P) = ‖Y − PX‖²_F = tr[ (Y − PX)(Y − PX)ᵀ ]
 求梯度    ∂J/∂P = 2( PXXᵀ − YXᵀ )
-
 令梯度为零（XXᵀ 可逆）：
           P̂ = Y·Xᵀ·(X·Xᵀ)⁻¹</div>
         <p style="margin-top:10px">这是标准最小二乘的<strong>正规方程解</strong>：把 <span class="kbd">N</span> 个符号周期里所有相位的数据一起用上，对 <span class="kbd">N_p+1</span> 个未知量做一次全局拟合。</p>

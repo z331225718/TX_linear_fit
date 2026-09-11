@@ -51,12 +51,14 @@ Data,<span class="cmt">&lt;-- 同样含尾随空格</span>
   <div class="body">
     <div class="kicker">OSR 判定</div>
     <h2>M（每 UI 采样数）从哪里来</h2>
-    <div class="eli5"><span class="lbl">人话</span><p>要知道「一个符号被切成了几段」，先量相邻采样点的平均间距，再用符号率换算。就像知道每格胶片多长、每秒放几格，就能算出动作被切成几张。</p></div>
+    <div class="eli5"><span class="lbl">人话</span><p>先量出「相邻采样点平均隔多久」，再用符号率换算：一个符号被切成了几段。</p></div>
     <div class="two-6-4">
       <div>
-        <div class="formula">Δt̃          = median{ t[k+1] − t[k] }      0 ≤ k &lt; N_s−1
-M_native    = 1 / (R_s · Δt̃)                局部网格
-M_effective = (N_s − 1) / { R_s · [t[N_s−1] − t[0]] }   整段平均</div>
+        <div class="formula"><span style="text-decoration:overline">t</span> = 相邻采样间隔的中位数（平均采样间隔）
+     <span style="text-decoration:overline">t</span> = median{ t[k+1] − t[k] },  0 ≤ k &lt; N_s−1
+
+M_native    = 1 / (R_s · <span style="text-decoration:overline">t</span>)                           局部采样密度
+M_effective = (N_s − 1) / { R_s · [t[N_s−1] − t[0]] }   整段平均采样密度</div>
         <h3>自动模式接受条件（全部满足）</h3>
         <ul>
           <li><span class="kbd">M_native</span> 与 <span class="kbd">M_effective</span> 取整后<strong>一致</strong>；</li>
@@ -65,12 +67,10 @@ M_effective = (N_s − 1) / { R_s · [t[N_s−1] − t[0]] }   整段平均</div
         </ul>
       </div>
       <div>
-        <div class="card"><h3>为什么不满足就报错？</h3><p>两者不一致通常意味着：符号率填错、时间单位错（ns 当 s）、导出丢点、或记录太短。<strong>猜一个 OSR 会让后面所有指标失去意义</strong>，所以宁可直接失败。</p></div>
-        <div class="card" style="margin-top:12px"><h3>丢点诊断</h3><p>用 <span class="kbd">Δt / Δt̃</span> 的整数倍估计缺失采样比例，写进报告的 <span class="kbd">missing_sample_fraction</span>。</p></div>
-        <div class="code" style="margin-top:12px;max-height:150px"><span class="cmt"># 代码落点</span>
-<b>application.py</b>
-  resolve_osr()            —— 判定与诊断
-  validate_fit_config()    —— 参数校验</div>
+        <div class="card"><h3>为什么不满足就报错？</h3><p>两者不一致通常意味着：符号率填错、时间单位错（ns 当 s）、导出丢点、记录太短。<strong>猜一个 OSR，后面所有指标都失去意义</strong>，所以宁可直接失败。</p></div>
+        <div class="card" style="margin-top:10px"><h3>丢点诊断</h3><p>用 <span class="kbd">Δt / 平均间隔</span> 的整数倍估计缺失采样比例，写进报告的 <span class="kbd">missing_sample_fraction</span>。</p></div>
+        <div class="code" style="margin-top:10px;max-height:120px"><span class="cmt"># 代码落点</span>
+<b>application.py</b>  resolve_osr() / validate_fit_config()</div>
       </div>
     </div>
   </div>
@@ -121,18 +121,14 @@ M_effective = (N_s − 1) / { R_s · [t[N_s−1] − t[0]] }   整段平均</div
       </div>
       <div>
         <h3>PRBS 多项式与周期</h3>
-        <div class="formula">PRBS13: G(x) = 1 + x + x² + x¹² + x¹³
-周期 = 2¹³ − 1 = 8191
-
-PRBS7 : x⁷ + x⁶ + 1       周期 127
-PRBS15: x¹⁵ + x¹⁴ + 1     周期 32767
-PRBS31: x³¹ + x²⁸ + 1     （完整周期过长，CLI 需限长）</div>
-        <div class="eli5"><span class="lbl">人话</span><p>PRBS 是一串「看起来随机、其实完全可复现」的比特。因为可复现，我们才能在电脑里生成一模一样的序列去和波形对齐。</p></div>
+        <div class="formula">PRBS13: G(x) = 1 + x + x² + x¹² + x¹³,  周期 = 2¹³ − 1 = 8191
+其它：PRBS7 (127) / PRBS15 (32767) / PRBS31（需限长）</div>
+        <div class="eli5"><span class="lbl">人话</span><p>PRBS 看起来随机，但完全可复现 —— 所以能在电脑里生成同一条序列去对齐波形。</p></div>
       </div>
     </div>
-    <div class="warn"><span class="lbl">协议边界</span><p>PRBS13 多项式与 Gray 映射与 OIF CEI-05.3 的 QPRBS13-CEI 一致，但正式合规仍需核对规范要求的发生器方向、种子、bit pairing 与序列示例。</p></div>
-    <div class="code" style="max-height:96px"><span class="cmt"># 代码落点</span>
-<b>pattern.py</b>  gen_prbs(s, taps, num_bits) / pam4_levels(bits) / nrz_levels(bits) / gen_data_pattern(...)</div>
+    <div class="warn"><span class="lbl">协议边界</span><p>PRBS13 多项式与 Gray 映射与 OIF CEI-05.3 的 QPRBS13-CEI 一致；正式合规仍需核对发生器方向、种子与 bit pairing。</p></div>
+    <div class="code" style="max-height:76px"><span class="cmt"># 代码落点</span>
+<b>pattern.py</b>  gen_prbs() / pam4_levels() / nrz_levels() / gen_data_pattern()</div>
   </div>
   <div class="sec">第 2 章 · 预处理</div>
   <div class="num">13</div>

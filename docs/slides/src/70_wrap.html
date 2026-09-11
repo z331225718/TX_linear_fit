@@ -133,7 +133,7 @@ D_p + N_DFE &lt; N_p
       <div>
         <h3>流程六步</h3>
         <ol class="steps">
-          <li>定 OSR：median Δt → M_native / M_effective，一致且 ≥2 才接受</li>
+          <li>定 OSR：相邻采样间隔中位数 → M_native / M_effective，一致且 ≥2 才接受</li>
           <li>重采样到 <span class="kbd">t = t0 + k/(M·R_s)</span></li>
           <li>再生 PRBS + Gray 映射，<strong>xcorr 对齐</strong>（负峰翻极性）</li>
           <li>折叠 <span class="kbd">Y</span> + 设计 <span class="kbd">X</span> → <span class="kbd">P̂ = YXᵀ(XXᵀ)⁻¹</span></li>

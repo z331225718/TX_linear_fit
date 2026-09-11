@@ -19,12 +19,13 @@
   #progress{position:fixed;top:0;left:0;height:3px;width:0;background:linear-gradient(90deg,var(--accent),var(--accent2));z-index:50;transition:width .18s ease}
   #stageWrap{position:fixed;inset:0;display:flex;align-items:center;justify-content:center}
   #stage{width:1280px;height:720px;position:relative;transform-origin:center center;flex:0 0 auto}
-  .slide{position:absolute;inset:0;padding:44px 56px 56px;background:
+  .slide{position:absolute;inset:0;padding:38px 56px 78px;background:
       radial-gradient(1100px 520px at 88% -12%,rgba(56,189,248,.13),transparent 60%),
       radial-gradient(900px 460px at -8% 108%,rgba(245,158,11,.10),transparent 60%),
       linear-gradient(180deg,var(--bg2),var(--bg));
       display:none;overflow:hidden}
   .slide.active{display:block}
+  #stage.measuring .slide{display:block!important;visibility:hidden}
   .slide::after{content:"";position:absolute;inset:0;background-image:linear-gradient(var(--grid) 1px,transparent 1px),linear-gradient(90deg,var(--grid) 1px,transparent 1px);background-size:64px 64px;pointer-events:none;opacity:.5}
   .kicker{font-size:15px;letter-spacing:.16em;text-transform:uppercase;color:var(--accent);font-weight:700;margin-bottom:8px}
   h1{font-size:54px;line-height:1.12;margin:0 0 14px;font-weight:800;letter-spacing:-.01em}
@@ -35,7 +36,7 @@
   li{margin-bottom:6px}
   strong{color:var(--ink)}
   em{color:var(--accent2);font-style:normal;font-weight:600}
-  .body{position:relative;z-index:2}
+  .body{position:relative;z-index:2;transform-origin:left top}
   .two{display:grid;grid-template-columns:1fr 1fr;gap:22px}
   .two-6-4{display:grid;grid-template-columns:1.45fr 1fr;gap:22px}
   .three{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
@@ -51,7 +52,7 @@
   .code{background:#070d19;border:1px solid var(--line);border-radius:12px;padding:14px 16px;font-family:var(--mono);font-size:15px;line-height:1.6;color:#cfe3ff;white-space:pre;overflow:auto;max-height:300px}
   .code b{color:var(--accent);font-weight:600}
   .code .cmt{color:#6f86a8}
-  .formula{background:#070d19;border:1px solid var(--line);border-radius:12px;padding:16px 20px;font-family:var(--mono);font-size:19px;line-height:1.85;color:#dbeafe;white-space:pre;overflow:auto}
+  .formula{background:#070d19;border:1px solid var(--line);border-radius:12px;padding:14px 18px;font-family:var(--mono);font-size:18.5px;line-height:1.7;color:#dbeafe;white-space:pre;overflow:auto}
   .formula em{color:var(--accent2);font-style:normal}
   table{border-collapse:collapse;width:100%;font-size:15.5px}
   th,td{border-bottom:1px solid var(--line);padding:7px 10px;text-align:left;color:var(--ink2)}
@@ -67,8 +68,8 @@
   .sub{font-size:20px;color:var(--ink2);max-width:1000px}
   .meta{margin-top:26px;display:flex;gap:26px;flex-wrap:wrap;font-family:var(--mono);font-size:14px;color:var(--muted)}
   .meta b{color:var(--accent)}
-  .num{position:absolute;right:56px;bottom:18px;font-family:var(--mono);font-size:13px;color:var(--muted);z-index:3}
-  .sec{position:absolute;left:56px;bottom:18px;font-family:var(--mono);font-size:13px;color:var(--muted);z-index:3}
+  .num{position:absolute;right:56px;bottom:16px;font-family:var(--mono);font-size:13px;color:var(--muted);z-index:3;background:rgba(10,17,32,.55);padding:2px 8px;border-radius:6px}
+  .sec{position:absolute;left:56px;bottom:16px;font-family:var(--mono);font-size:13px;color:var(--muted);z-index:3;background:rgba(10,17,32,.55);padding:2px 8px;border-radius:6px}
   .divider{display:flex;flex-direction:column;justify-content:center;height:100%}
   .divider .big{font-size:96px;font-weight:800;color:rgba(56,189,248,.18);line-height:1;font-family:var(--mono)}
   .divider h2{font-size:44px}
@@ -76,7 +77,7 @@
   figure{margin:0}
   figcaption{font-size:13.5px;color:var(--muted);margin-top:6px;text-align:center}
   .imgbox{background:#070d19;border:1px solid var(--line);border-radius:12px;padding:8px}
-  .imgbox img{width:100%;display:block;border-radius:8px}
+  .imgbox img{max-height:200px;width:auto;max-width:100%;display:block;margin:0 auto;border-radius:8px}
   svg{display:block;margin:0 auto}
   .steps{counter-reset:s;list-style:none;padding:0}
   .steps li{counter-increment:s;position:relative;padding-left:44px;margin-bottom:10px;font-size:17px}

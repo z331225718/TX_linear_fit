@@ -138,17 +138,11 @@ SNDR_fit[dB] = 10 log₁₀ ───────────
     <h2>测量派生传递函数：从脉冲反推频响</h2>
     <div class="two-6-4">
       <div>
-        <div class="formula">① 造理想脉冲 p_ideal：幅度 max|p|、宽 1 UI、
-   上升/下降时间 1 fs（数值上近似理想方波）
-
-② P(f)       = DFT{ p[k] }
-   P_ideal(f) = DFT{ p_ideal[k] }
-
-③ H̃(f) = |P(f)| / |P_ideal(f)|
-   H(f)  = H̃(f) / H̃(0),   H(0) = 1
-
-④ Nyquist : H_Nq[dB] = 20 log₁₀ |H(R_s/2)|
-⑤ BW 3dB  : 第一个满足 20log₁₀|H(f)| ≤ −3 的频点</div>
+        <div class="formula">① 理想脉冲 p_ideal：幅度 max|p|、宽 1 UI、上升/下降 1 fs
+② P(f) = DFT{p[k]},   P_ideal(f) = DFT{p_ideal[k]}
+③ H̃(f) = |P(f)| / |P_ideal(f)|,   H(f) = H̃(f) / H̃(0)
+④ Nyquist：H_Nq[dB] = 20 log₁₀ |H(R_s/2)|
+⑤ BW 3dB：第一个 20log₁₀|H(f)| ≤ −3 的频点</div>
         <p style="margin-top:8px">理想脉冲频谱的零点会让分母趋零，程序<strong>先剔除近零频点再线性插值</strong>补回分母。</p>
       </div>
       <div>
@@ -168,18 +162,12 @@ SNDR_fit[dB] = 10 log₁₀ ───────────
     <h2>95% 与 99% 眼宽：为什么不能只数过零点</h2>
     <div class="two-6-4">
       <div>
-        <div class="formula">① 相邻样本异号时线性插值求过零相位：
+        <div class="formula">① 过零相位（线性插值）：
    φ[i] = mod( k − y[k] / (y[k+1] − y[k]), M )
-
-② 圆均值求 crossing 中心：
-   φ_mean = [M/2π]·arg{ Σ exp( j·2π·φ[i]/M ) }
-
-③ 展开到 [−M/2, M/2)：
-   δ[i] = mod( φ[i] − φ_mean + M/2, M ) − M/2
-
-④ 取分位点（默认中央 99%）：
-   Δ = Q_0.995{δ} − Q_0.005{δ}
-   W = clip( 1 − Δ/M, 0, 1 )   [UI]</div>
+② 圆均值求中心：φ_mean = [M/2π]·arg{ Σ exp( j·2π·φ[i]/M ) }
+③ 展开到 ±半 UI：δ[i] = mod( φ[i] − φ_mean + M/2, M ) − M/2
+④ 中央 99% 跨度：Δ = Q_0.995{δ} − Q_0.005{δ}
+⑤ 眼宽：W = clip( 1 − Δ/M, 0, 1 )   [UI]</div>
         <p style="margin-top:8px">53.125 GBd 时 1 UI ≈ 18.824 ps；4 ps ≈ 0.2125 UI。</p>
       </div>
       <div>

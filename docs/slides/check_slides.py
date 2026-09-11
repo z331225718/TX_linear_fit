@@ -53,6 +53,20 @@ def main() -> int:
     print('embedded images: ' + str(src.count('data:image')))
     print('section labels : ' + str(src.count('data-sec=')))
 
+    if os.environ.get('SLIDE_OUTLINE') == '1':
+        blocks = re.split(r'(?=<section class="slide")', src)
+        n = 0
+        for b in blocks:
+            if 'class="slide"' not in b:
+                continue
+            n += 1
+            m = re.search(r'<h[12][^>]*>(.*?)</h[12]>', b, re.S)
+            title = re.sub(r'<[^>]+>', '', m.group(1)).strip() if m else '(divider)'
+            sec = re.search(r'data-sec="([^"]*)"', b)
+            print(str(n).rjust(2) + ' | ' + (sec.group(1) if sec else '').ljust(12) +
+                  ' | ' + title[:56])
+        print('')
+
     leftovers = re.findall(r'[{][{][A-Z_]+[}][}]', src)
     if leftovers:
         failures.append('unresolved tokens: ' + ', '.join(sorted(set(leftovers))))

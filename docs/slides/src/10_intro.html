@@ -166,7 +166,7 @@
   <div class="body">
     <div class="kicker">边界</div>
     <h2>这是诊断工具，不是一致性测试系统</h2>
-    <div class="warn"><span class="lbl">必须说清楚</span><p>本工具是波形分析与算法验证工具。<span class="kbd">neutral</span> / <span class="kbd">ieee8023</span> / <span class="kbd">oif</span> 只改变报告里的语义标签，<strong>不会</strong>自动选择协议参数、不会加限值、不会给 pass/fail。</p></div>
+    <div class="warn"><span class="lbl">必须说清楚</span><p>本工具是波形分析与算法验证工具，<strong>不是认证系统</strong>。报告可带三种<strong>语义标签</strong>：<span class="kbd">neutral</span>＝不声明按哪家协议口径解读（默认）、<span class="kbd">ieee8023</span>＝按 IEEE 802.3 口径标注、<span class="kbd">oif</span>＝按 OIF CEI 口径标注。标签<strong>只改报告上的文字说明</strong>：不会自动选择协议参数、不会加限值、也不会给出 pass/fail 结论。</p></div>
     <div class="two">
       <div class="card"><h3>它能做</h3><ul>
         <li>发送端波形诊断与参数敏感性分析</li>
