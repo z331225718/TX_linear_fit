@@ -102,7 +102,7 @@
 <body>
 <div id="progress"></div>
 <div id="stageWrap"><div id="stage">
-<section class="slide" data-sec="导览">
+<section class="slide" data-sec="封面">
   <div class="body title-slide">
     <div class="kicker">内部培训 · SerDes 发送端测量</div>
     <h1>TX Linear Fit 算法全解</h1>
@@ -110,41 +110,14 @@
     <div class="meta">
       <span><b>代码</b> python_src/</span>
       <span><b>技术文档</b> docs/TECHNICAL_GUIDE.md</span>
-      <span><b>验证</b> MATLAB golden 92/92 + 72/72</span>
+      <span><b>验证</b> golden 对比 0 失败（A 90 项 / B 70 项）</span>
     </div>
   </div>
   <div class="sec">TX Linear Fit · 培训教材</div>
   <div class="num">1</div>
 </section>
 
-<section class="slide" data-sec="导览">
-  <div class="body">
-    <div class="kicker">导览</div>
-    <h2>这份材料怎么用</h2>
-    <div class="two">
-      <div>
-        <div class="eli5"><span class="lbl">一句话</span><p>每一页都按「人话 → 原理 → 代码落点」三层写：先让你能跟同事讲明白，再让你能改代码。</p></div>
-        <h3>三层结构</h3>
-        <ul>
-          <li><strong>人话</strong>（绿色框）：30 秒能复述的类比，不含公式。</li>
-          <li><strong>原理</strong>：公式、矩阵形状、流程图，对应标准/文档里的定义。</li>
-          <li><strong>代码落点</strong>（深色框）：改哪个文件、哪个函数。</li>
-        </ul>
-      </div>
-      <div>
-        <h3>受众假设</h3>
-        <p>刚接触发送端测量的工程师（0–2 年），以及要给团队做内训的资深工程师。默认你懂「眼图」「UI」「PAM4 电平」这些词，但没推导过最小二乘。</p>
-        <div class="warn"><span class="lbl">需要别的版本？</span><p>如果听众是纯管理/完全非技术（例如给老板或家人讲），告诉我，可生成纯类比版；如果是 DSP 专家，可生成只留推导的精简版。</p></div>
-        <h3>操作</h3>
-        <p><span class="kbd">←</span> <span class="kbd">→</span> 翻页 · <span class="kbd">O</span> 目录 · <span class="kbd">F</span> 全屏 · <span class="kbd">Ctrl+P</span> 导出 PDF</p>
-      </div>
-    </div>
-  </div>
-  <div class="sec">导览</div>
-  <div class="num">2</div>
-</section>
-
-<section class="slide" data-sec="导览">
+<section class="slide" data-sec="全景">
   <div class="body">
     <div class="kicker">全景</div>
     <h2>一条波形进来，六件事发生</h2>
@@ -198,8 +171,8 @@
     </svg>
     <div class="eli5" style="margin-top:8px"><span class="lbl">人话版</span><p>就像拿已知歌词去对一段嘈杂录音：先对准拍子（同步），再看每个字被房间回声拖成什么样（脉冲响应），然后设计一个反向滤镜把回声压掉（FFE/DFE），最后给这段录音打分（SNDR/RLM/眼图）。</p></div>
   </div>
-  <div class="sec">导览</div>
-  <div class="num">3</div>
+  <div class="sec">全景</div>
+  <div class="num">2</div>
 </section>
 
 <section class="slide" data-sec="第1章 为什么">
@@ -213,7 +186,7 @@
     </ul>
   </div>
   <div class="sec">第 1 章 · 为什么</div>
-  <div class="num">4</div>
+  <div class="num">3</div>
 </section>
 
 <section class="slide" data-sec="第1章 为什么">
@@ -230,7 +203,7 @@
     <p style="margin-top:12px">输入前提：波形必须是<strong>已知周期的确定性码型</strong>（PRBS7/13/15/31 或 Clock 类），否则无法重建理想符号序列，也就无法做最小二乘。</p>
   </div>
   <div class="sec">第 1 章 · 为什么</div>
-  <div class="num">5</div>
+  <div class="num">4</div>
 </section>
 
 <section class="slide" data-sec="第1章 为什么">
@@ -254,7 +227,7 @@
     </div>
   </div>
   <div class="sec">第 1 章 · 为什么</div>
-  <div class="num">6</div>
+  <div class="num">5</div>
 </section>
 
 <section class="slide" data-sec="第1章 为什么">
@@ -290,7 +263,7 @@
     <p style="margin-top:10px">记法：大写字母表示矩阵，小写表示标量/向量，<span class="kbd">(·)ᵀ</span> 转置，<span class="kbd">‖·‖₂</span> 欧氏范数，<span class="kbd">‖·‖_F</span> Frobenius 范数。</p>
   </div>
   <div class="sec">第 1 章 · 为什么</div>
-  <div class="num">7</div>
+  <div class="num">6</div>
 </section>
 
 <section class="slide" data-sec="第1章 为什么">
@@ -313,9 +286,8 @@
     <p style="margin-top:10px">正式认证应核对：目标 PHY、测试点、标准版本、夹具去嵌、规定滤波器与仪器流程。标准条款与限值会随修订变化。</p>
   </div>
   <div class="sec">第 1 章 · 为什么</div>
-  <div class="num">8</div>
-</section>
-<section class="slide" data-sec="第2章 预处理">
+  <div class="num">7</div>
+</section><section class="slide" data-sec="第2章 预处理">
   <div class="body divider">
     <div class="big">02</div>
     <h2>输入与预处理</h2>
@@ -326,7 +298,7 @@
     </ul>
   </div>
   <div class="sec">第 2 章 · 预处理</div>
-  <div class="num">9</div>
+  <div class="num">8</div>
 </section>
 
 <section class="slide" data-sec="第2章 预处理">
@@ -361,7 +333,7 @@ Data,<span class="cmt">&lt;-- 同样含尾随空格</span>
 <b>application.py</b>     analyze() —— 统一入口，串起解析 → OSR → 分析</div>
   </div>
   <div class="sec">第 2 章 · 预处理</div>
-  <div class="num">10</div>
+  <div class="num">9</div>
 </section>
 
 <section class="slide" data-sec="第2章 预处理">
@@ -392,7 +364,7 @@ M_effective = (N_s − 1) / { R_s · [t[N_s−1] − t[0]] }   整段平均</div
     </div>
   </div>
   <div class="sec">第 2 章 · 预处理</div>
-  <div class="num">11</div>
+  <div class="num">10</div>
 </section>
 
 <section class="slide" data-sec="第2章 预处理">
@@ -417,7 +389,7 @@ M_effective = (N_s − 1) / { R_s · [t[N_s−1] − t[0]] }   整段平均</div
     </div>
   </div>
   <div class="sec">第 2 章 · 预处理</div>
-  <div class="num">12</div>
+  <div class="num">11</div>
 </section>
 
 <section class="slide" data-sec="第2章 预处理">
@@ -452,7 +424,7 @@ PRBS31: x³¹ + x²⁸ + 1     （完整周期过长，CLI 需限长）</div>
 <b>pattern.py</b>  gen_prbs(s, taps, num_bits) / pam4_levels(bits) / nrz_levels(bits) / gen_data_pattern(...)</div>
   </div>
   <div class="sec">第 2 章 · 预处理</div>
-  <div class="num">13</div>
+  <div class="num">12</div>
 </section>
 
 <section class="slide" data-sec="第2章 预处理">
@@ -490,7 +462,7 @@ PRBS31: x³¹ + x²⁸ + 1     （完整周期过长，CLI 需限长）</div>
     </div>
   </div>
   <div class="sec">第 2 章 · 预处理</div>
-  <div class="num">14</div>
+  <div class="num">13</div>
 </section>
 
 <section class="slide" data-sec="第2章 预处理">
@@ -522,7 +494,7 @@ alignment_shift           命中的移位量</div>
     </div>
   </div>
   <div class="sec">第 2 章 · 预处理</div>
-  <div class="num">15</div>
+  <div class="num">14</div>
 </section>
 <section class="slide" data-sec="第3章 线性拟合">
   <div class="body divider">
@@ -535,7 +507,7 @@ alignment_shift           命中的移位量</div>
     </ul>
   </div>
   <div class="sec">第 3 章 · 线性拟合</div>
-  <div class="num">16</div>
+  <div class="num">15</div>
 </section>
 
 <section class="slide" data-sec="第3章 线性拟合">
@@ -584,7 +556,7 @@ shape(Y) = M × N</div>
 <b>fit_pulse_response.py</b>  Y = data[:M*N].reshape(M, N, order='F')   <span class="cmt"># 列优先 = MATLAB reshape</span></div>
   </div>
   <div class="sec">第 3 章 · 线性拟合</div>
-  <div class="num">17</div>
+  <div class="num">16</div>
 </section>
 
 <section class="slide" data-sec="第3章 线性拟合">
@@ -629,7 +601,7 @@ shape(X) = (N_p + 1) × N</div>
 <b>fit_pulse_response.py</b>  xr = concat(decisions[D_p:], decisions[:D_p])；X[r] = roll(xr, r)；X[N_p] = 1</div>
   </div>
   <div class="sec">第 3 章 · 线性拟合</div>
-  <div class="num">18</div>
+  <div class="num">17</div>
 </section>
 
 <section class="slide" data-sec="第3章 线性拟合">
@@ -666,7 +638,7 @@ shape(X) = (N_p + 1) × N</div>
 <b>fit_pulse_response.py</b>  P = (Y @ X.T) @ inv(X @ X.T)   <span class="cmt"># 保持与 golden 相同的运算顺序</span></div>
   </div>
   <div class="sec">第 3 章 · 线性拟合</div>
-  <div class="num">19</div>
+  <div class="num">18</div>
 </section>
 
 <section class="slide" data-sec="第3章 线性拟合">
@@ -691,7 +663,7 @@ shape(X) = (N_p + 1) × N</div>
     </div>
   </div>
   <div class="sec">第 3 章 · 线性拟合</div>
-  <div class="num">20</div>
+  <div class="num">19</div>
 </section>
 
 <section class="slide" data-sec="第3章 线性拟合">
@@ -734,7 +706,7 @@ shape(X) = (N_p + 1) × N</div>
 <b>fit_pulse_response.py</b>  e = E.reshape(-1, order='F')   /   p = P[:, :N_p].reshape(-1, order='F')</div>
   </div>
   <div class="sec">第 3 章 · 线性拟合</div>
-  <div class="num">21</div>
+  <div class="num">20</div>
 </section>
 
 <section class="slide" data-sec="第3章 线性拟合">
@@ -762,7 +734,7 @@ SNDR_fit[dB] = 20 log₁₀( p_max / e_RMS,fit )</div>
     </div>
   </div>
   <div class="sec">第 3 章 · 线性拟合</div>
-  <div class="num">22</div>
+  <div class="num">21</div>
 </section>
 
 <section class="slide" data-sec="第3章 线性拟合">
@@ -794,7 +766,7 @@ SNR_ISI[dB] = 20 log₁₀ ─────────────────�
     </div>
   </div>
   <div class="sec">第 3 章 · 线性拟合</div>
-  <div class="num">23</div>
+  <div class="num">22</div>
 </section>
 <section class="slide" data-sec="第4章 均衡器">
   <div class="body divider">
@@ -807,7 +779,7 @@ SNR_ISI[dB] = 20 log₁₀ ─────────────────�
     </ul>
   </div>
   <div class="sec">第 4 章 · 均衡器</div>
-  <div class="num">24</div>
+  <div class="num">23</div>
 </section>
 
 <section class="slide" data-sec="第4章 均衡器">
@@ -850,7 +822,7 @@ FFE 问题：
     </div>
   </div>
   <div class="sec">第 4 章 · 均衡器</div>
-  <div class="num">25</div>
+  <div class="num">24</div>
 </section>
 
 <section class="slide" data-sec="第4章 均衡器">
@@ -901,7 +873,7 @@ FFE 问题：
 <b>fit_pulse_response.py</b>  P3 构造 + w = inv(P3.T @ P3) @ P3.T @ xp；firNum = w</div>
   </div>
   <div class="sec">第 4 章 · 均衡器</div>
-  <div class="num">26</div>
+  <div class="num">25</div>
 </section>
 
 <section class="slide" data-sec="第4章 均衡器">
@@ -922,7 +894,7 @@ FFE 问题：
     <div class="eli5"><span class="lbl">人话</span><p>除以 Σw 是「保持总增益不变」；除以 Σ|w| 是「保持总能量不变」。就像调音量 vs 调总输出功率，两者不是一回事。</p></div>
   </div>
   <div class="sec">第 4 章 · 均衡器</div>
-  <div class="num">27</div>
+  <div class="num">26</div>
 </section>
 
 <section class="slide" data-sec="第4章 均衡器">
@@ -952,7 +924,7 @@ FFE 问题：
 <b>fit_pulse_response.py</b>  DFEtapWeight 与第二个 xp；<b>pulse_response_tool.py</b>  constellation_sndr_helper_f 中做反馈减法</div>
   </div>
   <div class="sec">第 4 章 · 均衡器</div>
-  <div class="num">28</div>
+  <div class="num">27</div>
 </section>
 
 <section class="slide" data-sec="第4章 均衡器">
@@ -994,7 +966,7 @@ necessarily singular</div>
     </div>
   </div>
   <div class="sec">第 4 章 · 均衡器</div>
-  <div class="num">29</div>
+  <div class="num">28</div>
 </section>
 <section class="slide" data-sec="第5章 指标与图形">
   <div class="body divider">
@@ -1007,7 +979,7 @@ necessarily singular</div>
     </ul>
   </div>
   <div class="sec">第 5 章 · 指标与图形</div>
-  <div class="num">30</div>
+  <div class="num">29</div>
 </section>
 
 <section class="slide" data-sec="第5章 指标与图形">
@@ -1037,7 +1009,7 @@ necessarily singular</div>
     </div>
   </div>
   <div class="sec">第 5 章 · 指标与图形</div>
-  <div class="num">31</div>
+  <div class="num">30</div>
 </section>
 
 <section class="slide" data-sec="第5章 指标与图形">
@@ -1061,7 +1033,7 @@ necessarily singular</div>
     </div>
   </div>
   <div class="sec">第 5 章 · 指标与图形</div>
-  <div class="num">32</div>
+  <div class="num">31</div>
 </section>
 
 <section class="slide" data-sec="第5章 指标与图形">
@@ -1095,7 +1067,7 @@ RLM = min( 3·ES1, 3·ES2, 2−3·ES1, 2−3·ES2 )</div>
     <p>若某一电平没有样本，相应 RLM 记 <span class="kbd">n/a</span>（例如 NRZ 或星座严重退化时），不编数。</p>
   </div>
   <div class="sec">第 5 章 · 指标与图形</div>
-  <div class="num">33</div>
+  <div class="num">32</div>
 </section>
 
 <section class="slide" data-sec="第5章 指标与图形">
@@ -1127,7 +1099,7 @@ SNDR_fit[dB] = 10 log₁₀ ───────────
     <div class="warn"><span class="lbl">汇报时请注意</span><p>报告<strong>不套用协议 SNDR 限值</strong>。CLI 另输出的 <span class="kbd">SNDR ffe</span> / <span class="kbd">SNDR ffe_and_dfe</span> 是均衡后判决域指标（分子/分母/滤波/判决都不同），<strong>不能</strong>与 <span class="kbd">SNDR (Fit)</span> 横向比较；为避免误读，这两个值不出现在 HTML 报告里。</p></div>
   </div>
   <div class="sec">第 5 章 · 指标与图形</div>
-  <div class="num">34</div>
+  <div class="num">33</div>
 </section>
 
 <section class="slide" data-sec="第5章 指标与图形">
@@ -1157,7 +1129,7 @@ SNDR_fit[dB] = 10 log₁₀ ───────────
     <div class="warn"><span class="lbl">别叫它插损</span><p><span class="kbd">H(f)</span> 同时包含发送端、采集链路与<strong>有限拟合窗口</strong>的影响，<strong>不是</strong>混合模 S 参数 <span class="kbd">S_DD21</span>，不能替代协议规定的通道插入损耗。数值为正表示相对 DC 有高频提升（boost），不应称为「正的损耗」。</p></div>
   </div>
   <div class="sec">第 5 章 · 指标与图形</div>
-  <div class="num">35</div>
+  <div class="num">34</div>
 </section>
 
 <section class="slide" data-sec="第5章 指标与图形">
@@ -1188,7 +1160,7 @@ SNDR_fit[dB] = 10 log₁₀ ───────────
     <div class="eli5"><span class="lbl">人话</span><p>如果只找「最窄的那一秒」，那么成千上万个 UI 里只要有<em>一次</em>抖动毛刺，眼宽就会塌成 0。<strong>中央 99%</strong> 的意思是：把最外侧各 0.5% 的过零点当离群点排除，剩下的跨度才算眼宽。</p></div>
   </div>
   <div class="sec">第 5 章 · 指标与图形</div>
-  <div class="num">36</div>
+  <div class="num">35</div>
 </section>
 
 <section class="slide" data-sec="第5章 指标与图形">
@@ -1217,7 +1189,7 @@ SNDR_fit[dB] = 10 log₁₀ ───────────
     </div>
   </div>
   <div class="sec">第 5 章 · 指标与图形</div>
-  <div class="num">37</div>
+  <div class="num">36</div>
 </section>
 <section class="slide" data-sec="第6章 数值保真">
   <div class="body divider">
@@ -1230,7 +1202,7 @@ SNDR_fit[dB] = 10 log₁₀ ───────────
     </ul>
   </div>
   <div class="sec">第 6 章 · 数值保真</div>
-  <div class="num">38</div>
+  <div class="num">37</div>
 </section>
 
 <section class="slide" data-sec="第6章 数值保真">
@@ -1260,7 +1232,7 @@ SNDR_fit[dB] = 10 log₁₀ ───────────
     </div>
   </div>
   <div class="sec">第 6 章 · 数值保真</div>
-  <div class="num">39</div>
+  <div class="num">38</div>
 </section>
 
 <section class="slide" data-sec="第6章 数值保真">
@@ -1285,7 +1257,7 @@ e = E.reshape(-1, order='F')</div>
     <div class="warn"><span class="lbl">一句话记忆</span><p>凡是「从矩阵回到一维」的地方，先问自己：这是<strong>列优先还是行优先</strong>？本项目里 <span class="kbd">p/e/l</span> 是列优先，而眼图 <span class="kbd">re_interleaved</span> 恰恰是<strong>行优先</strong>。</p></div>
   </div>
   <div class="sec">第 6 章 · 数值保真</div>
-  <div class="num">40</div>
+  <div class="num">39</div>
 </section>
 
 <section class="slide" data-sec="第6章 数值保真">
@@ -1305,7 +1277,7 @@ e = E.reshape(-1, order='F')</div>
 <b>matlab_compat.py</b>  colon() / xcorr() / interp1_linear() / interp1_spline() / filter_fir() / freqz() / rms() / matlab_round()</div>
   </div>
   <div class="sec">第 6 章 · 数值保真</div>
-  <div class="num">41</div>
+  <div class="num">40</div>
 </section>
 
 <section class="slide" data-sec="第6章 数值保真">
@@ -1337,7 +1309,7 @@ e = E.reshape(-1, order='F')</div>
     </div>
   </div>
   <div class="sec">第 6 章 · 数值保真</div>
-  <div class="num">42</div>
+  <div class="num">41</div>
 </section>
 
 <section class="slide" data-sec="第6章 数值保真">
@@ -1357,7 +1329,7 @@ e = E.reshape(-1, order='F')</div>
     </table>
   </div>
   <div class="sec">第 6 章 · 数值保真</div>
-  <div class="num">43</div>
+  <div class="num">42</div>
 </section>
 <section class="slide" data-sec="第7章 上手">
   <div class="body divider">
@@ -1370,7 +1342,7 @@ e = E.reshape(-1, order='F')</div>
     </ul>
   </div>
   <div class="sec">第 7 章 · 上手</div>
-  <div class="num">44</div>
+  <div class="num">43</div>
 </section>
 
 <section class="slide" data-sec="第7章 上手">
@@ -1394,7 +1366,7 @@ D_p + N_DFE &lt; N_p
     </div>
   </div>
   <div class="sec">第 7 章 · 上手</div>
-  <div class="num">45</div>
+  <div class="num">44</div>
 </section>
 
 <section class="slide" data-sec="第7章 上手">
@@ -1427,7 +1399,7 @@ D_p + N_DFE &lt; N_p
     </div>
   </div>
   <div class="sec">第 7 章 · 上手</div>
-  <div class="num">46</div>
+  <div class="num">45</div>
 </section>
 
 <section class="slide" data-sec="第7章 上手">
@@ -1466,7 +1438,7 @@ D_p + N_DFE &lt; N_p
     </div>
   </div>
   <div class="sec">第 7 章 · 上手</div>
-  <div class="num">47</div>
+  <div class="num">46</div>
 </section>
 
 <section class="slide" data-sec="第7章 上手">
@@ -1483,7 +1455,7 @@ D_p + N_DFE &lt; N_p
     <div class="card"><h3>与本材料的对应关系</h3><p>公式、符号与边界描述均与仓库内 <span class="kbd">docs/TECHNICAL_GUIDE.md</span> 一致；本材料是它的<strong>教学版</strong>：补了类比、图示、代码落点与排障清单。</p></div>
   </div>
   <div class="sec">第 7 章 · 上手</div>
-  <div class="num">48</div>
+  <div class="num">47</div>
 </section>
 
 <section class="slide" data-sec="第7章 上手">
@@ -1510,14 +1482,12 @@ D_p + N_DFE &lt; N_p
           <li><strong>可验证</strong>：同一份波形 + golden 逐字段比对，1e-9 才算过。</li>
         </ul>
         <div class="eli5" style="margin-top:10px"><span class="lbl">最后一句话</span><p>这套算法的本质只有一句：<em>用已知的符号序列，把未知的脉冲响应「解」出来，再据此设计均衡器并量化剩余损伤。</em></p></div>
-        <div class="chips" style="margin-top:10px"><span class="chip acc">问题 → 联系我</span><span class="chip">想加章节/改受众层？直接说</span></div>
       </div>
     </div>
   </div>
   <div class="sec">第 7 章 · 上手</div>
-  <div class="num">49</div>
-</section>
-</div></div>
+  <div class="num">48</div>
+</section></div></div>
 <div id="toc"><h2>目录 · 点击跳转</h2><ol id="tocList"></ol></div>
 <div id="help">← → 翻页 · O 目录 · F 全屏 · Ctrl+P 导出 PDF</div>
 <script>
@@ -1570,6 +1540,13 @@ D_p + N_DFE &lt; N_p
     }
   }
 
+  function renumber() {
+    for (var i = 0; i < slides.length; i++) {
+      var n = slides[i].querySelector('.num');
+      if (n) { n.textContent = String(i + 1); }
+    }
+  }
+
   function toggleToc() { toc.classList.toggle('on'); }
 
   function fullscreen() {
@@ -1600,6 +1577,7 @@ D_p + N_DFE &lt; N_p
   window.addEventListener('resize', fit);
 
   buildToc();
+  renumber();
   fit();
   var h = parseInt((window.location.hash || '#1').replace(/#/g, ''), 10);
   show(isNaN(h) ? 0 : h - 1, false);

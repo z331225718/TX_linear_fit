@@ -1,4 +1,4 @@
-<section class="slide" data-sec="导览">
+<section class="slide" data-sec="封面">
   <div class="body title-slide">
     <div class="kicker">内部培训 · SerDes 发送端测量</div>
     <h1>TX Linear Fit 算法全解</h1>
@@ -6,41 +6,14 @@
     <div class="meta">
       <span><b>代码</b> python_src/</span>
       <span><b>技术文档</b> docs/TECHNICAL_GUIDE.md</span>
-      <span><b>验证</b> MATLAB golden 92/92 + 72/72</span>
+      <span><b>验证</b> golden 对比 0 失败（A 90 项 / B 70 项）</span>
     </div>
   </div>
   <div class="sec">TX Linear Fit · 培训教材</div>
   <div class="num">1</div>
 </section>
 
-<section class="slide" data-sec="导览">
-  <div class="body">
-    <div class="kicker">导览</div>
-    <h2>这份材料怎么用</h2>
-    <div class="two">
-      <div>
-        <div class="eli5"><span class="lbl">一句话</span><p>每一页都按「人话 → 原理 → 代码落点」三层写：先让你能跟同事讲明白，再让你能改代码。</p></div>
-        <h3>三层结构</h3>
-        <ul>
-          <li><strong>人话</strong>（绿色框）：30 秒能复述的类比，不含公式。</li>
-          <li><strong>原理</strong>：公式、矩阵形状、流程图，对应标准/文档里的定义。</li>
-          <li><strong>代码落点</strong>（深色框）：改哪个文件、哪个函数。</li>
-        </ul>
-      </div>
-      <div>
-        <h3>受众假设</h3>
-        <p>刚接触发送端测量的工程师（0–2 年），以及要给团队做内训的资深工程师。默认你懂「眼图」「UI」「PAM4 电平」这些词，但没推导过最小二乘。</p>
-        <div class="warn"><span class="lbl">需要别的版本？</span><p>如果听众是纯管理/完全非技术（例如给老板或家人讲），告诉我，可生成纯类比版；如果是 DSP 专家，可生成只留推导的精简版。</p></div>
-        <h3>操作</h3>
-        <p><span class="kbd">←</span> <span class="kbd">→</span> 翻页 · <span class="kbd">O</span> 目录 · <span class="kbd">F</span> 全屏 · <span class="kbd">Ctrl+P</span> 导出 PDF</p>
-      </div>
-    </div>
-  </div>
-  <div class="sec">导览</div>
-  <div class="num">2</div>
-</section>
-
-<section class="slide" data-sec="导览">
+<section class="slide" data-sec="全景">
   <div class="body">
     <div class="kicker">全景</div>
     <h2>一条波形进来，六件事发生</h2>
@@ -94,7 +67,7 @@
     </svg>
     <div class="eli5" style="margin-top:8px"><span class="lbl">人话版</span><p>就像拿已知歌词去对一段嘈杂录音：先对准拍子（同步），再看每个字被房间回声拖成什么样（脉冲响应），然后设计一个反向滤镜把回声压掉（FFE/DFE），最后给这段录音打分（SNDR/RLM/眼图）。</p></div>
   </div>
-  <div class="sec">导览</div>
+  <div class="sec">全景</div>
   <div class="num">3</div>
 </section>
 

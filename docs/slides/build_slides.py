@@ -72,6 +72,20 @@ def data_uri(path: str, max_width: int, force_jpeg: bool) -> str:
     return 'data:' + mime + ';base64,' + base64.b64encode(payload).decode('ascii')
 
 
+def renumber(html: str) -> str:
+    """Rewrite every slide's page number from its document order, so that
+    adding/removing a slide never leaves stale numbers behind."""
+    counter = [0]
+
+    def sub(_match):
+        counter[0] += 1
+        return '<div class="num">' + str(counter[0]) + '</div>'
+
+    html = re.sub(r'<div class="num">[0-9]+</div>', sub, html)
+    print('renumbered slides: ' + str(counter[0]))
+    return html
+
+
 def main() -> int:
     parts = sorted(f for f in os.listdir(SRC) if f.lower().endswith('.html'))
     if not parts:
@@ -94,6 +108,8 @@ def main() -> int:
         if placeholder not in html:
             continue
         html = html.replace(placeholder, data_uri(path, width, jpeg))
+
+    html = renumber(html)
 
     leftovers = sorted(set(re.findall(r'\{\{[A-Z_]+\}\}', html)))
     if leftovers:

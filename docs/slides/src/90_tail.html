@@ -51,6 +51,13 @@
     }
   }
 
+  function renumber() {
+    for (var i = 0; i < slides.length; i++) {
+      var n = slides[i].querySelector('.num');
+      if (n) { n.textContent = String(i + 1); }
+    }
+  }
+
   function toggleToc() { toc.classList.toggle('on'); }
 
   function fullscreen() {
@@ -81,6 +88,7 @@
   window.addEventListener('resize', fit);
 
   buildToc();
+  renumber();
   fit();
   var h = parseInt((window.location.hash || '#1').replace(/#/g, ''), 10);
   show(isNaN(h) ? 0 : h - 1, false);
