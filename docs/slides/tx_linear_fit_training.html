@@ -12,6 +12,7 @@
     --line:rgba(255,255,255,.10); --grid:rgba(255,255,255,.045);
     --mono:"Cascadia Code","JetBrains Mono",Consolas,"SF Mono",Menlo,monospace;
     --sans:"Segoe UI","PingFang SC","Microsoft YaHei",system-ui,-apple-system,sans-serif;
+    --math:"Cambria Math",Cambria,"Times New Roman","Segoe UI Symbol",Georgia,serif;
   }
   *{box-sizing:border-box}
   html,body{margin:0;padding:0;background:var(--bg);color:var(--ink);font-family:var(--sans)}
@@ -54,6 +55,24 @@
   .code .cmt{color:#6f86a8}
   .formula{background:#070d19;border:1px solid var(--line);border-radius:12px;padding:14px 18px;font-family:var(--mono);font-size:18.5px;line-height:1.7;color:#dbeafe;white-space:pre;overflow:auto}
   .formula em{color:var(--accent2);font-style:normal}
+  /* ---- math typesetting: real fractions, sub/superscripts, aligned lines ---- */
+  .formula.math{white-space:normal;font-family:var(--sans);padding:12px 16px}
+  .formula.math .fline{display:grid;grid-template-columns:auto 1fr;gap:2px 16px;align-items:baseline;padding:3px 0}
+  .formula.math .fline+.fline{border-top:1px solid rgba(255,255,255,.055)}
+  .formula.math .flabel{font-size:14.5px;color:var(--muted);white-space:nowrap;font-family:var(--sans)}
+  .formula.math.center{text-align:center}
+  .formula.math.center .fline{grid-template-columns:1fr}
+  .m{font-family:var(--math);font-size:20px;line-height:1.45;color:#eaf2ff;white-space:nowrap;letter-spacing:.01em}
+  .m i{font-style:italic;font-family:inherit}
+  .m u{text-decoration:none;border-bottom:1px solid rgba(232,241,255,.55)}
+  .m .sub{font-size:.7em;font-family:var(--math);vertical-align:-.28em;padding:0 .02em}
+  .m .sup{font-size:.7em;font-family:var(--math);vertical-align:.5em;padding:0 .02em}
+  .m .fn{font-style:normal;padding-right:.12em}
+  .frac{display:inline-flex;flex-direction:column;align-items:center;vertical-align:-.55em;margin:0 .22em}
+  .frac>span{padding:0 .34em;line-height:1.3;font-family:var(--math);white-space:nowrap}
+  .frac>.num{border-bottom:1.35px solid #93aecf}
+  .frac>.den{padding-top:2px}
+  .m sub,.m sup{font-family:var(--math)}
   table{border-collapse:collapse;width:100%;font-size:15.5px}
   th,td{border-bottom:1px solid var(--line);padding:7px 10px;text-align:left;color:var(--ink2)}
   th{color:var(--accent);font-weight:700;font-size:14px;letter-spacing:.04em}
@@ -344,11 +363,11 @@ Data,<span class="cmt">&lt;-- 同样含尾随空格</span>
     <div class="eli5"><span class="lbl">人话</span><p>先量出「相邻采样点平均隔多久」，再用符号率换算：一个符号被切成了几段。</p></div>
     <div class="two-6-4">
       <div>
-        <div class="formula"><span style="text-decoration:overline">t</span> = 相邻采样间隔的中位数（平均采样间隔）
-     <span style="text-decoration:overline">t</span> = median{ t[k+1] − t[k] },  0 ≤ k &lt; N_s−1
-
-M_native    = 1 / (R_s · <span style="text-decoration:overline">t</span>)                           局部采样密度
-M_effective = (N_s − 1) / { R_s · [t[N_s−1] − t[0]] }   整段平均采样密度</div>
+        <div class="formula math">
+          <div class="fline"><span class="flabel">平均采样间隔</span><span class="m"><span style="text-decoration:overline"><i>t</i></span> = median{ <i>t</i>[<i>k</i>+1] − <i>t</i>[<i>k</i>] },&nbsp;&nbsp;0 ≤ <i>k</i> &lt; <i>N</i><span class="sub">s</span> − 1</span></div>
+          <div class="fline"><span class="flabel">局部采样密度</span><span class="m"><i>M</i><span class="sub">native</span> = 1 / (<i>R</i><span class="sub">s</span> · <span style="text-decoration:overline"><i>t</i></span>)</span></div>
+          <div class="fline"><span class="flabel">整段平均密度</span><span class="m"><i>M</i><span class="sub">effective</span> = (<i>N</i><span class="sub">s</span> − 1) / [ <i>R</i><span class="sub">s</span> · (<i>t</i>[<i>N</i><span class="sub">s</span>−1] − <i>t</i>[0]) ]</span></div>
+        </div>
         <h3>自动模式接受条件（全部满足）</h3>
         <ul>
           <li><span class="kbd">M_native</span> 与 <span class="kbd">M_effective</span> 取整后<strong>一致</strong>；</li>
@@ -374,7 +393,9 @@ M_effective = (N_s − 1) / { R_s · [t[N_s−1] − t[0]] }   整段平均采�
     <h2>落到均匀分析网格上</h2>
     <div class="two-6-4">
       <div>
-        <div class="formula">t_grid[k] = t[0] + k / (M · R_s),   k = 0 … N_grid−1</div>
+        <div class="formula math center">
+          <div class="fline"><span class="m"><i>t</i><span class="sub">grid</span>[<i>k</i>] = <i>t</i>[0] + <i>k</i> / (<i>M</i> · <i>R</i><span class="sub">s</span>),&nbsp;&nbsp;<i>k</i> = 0 … <i>N</i><span class="sub">grid</span> − 1</span></div>
+        </div>
         <ul>
           <li>带时间轴的波形用<strong>线性插值</strong>搬到这条网格上；</li>
           <li>只有电压的文件不做插值，直接按给定 OSR 解释；</li>
@@ -411,8 +432,10 @@ M_effective = (N_s − 1) / { R_s · [t[N_s−1] − t[0]] }   整段平均采�
       </div>
       <div>
         <h3>PRBS 多项式与周期</h3>
-        <div class="formula">PRBS13: G(x) = 1 + x + x² + x¹² + x¹³,  周期 = 2¹³ − 1 = 8191
-其它：PRBS7 (127) / PRBS15 (32767) / PRBS31（需限长）</div>
+        <div class="formula math">
+          <div class="fline"><span class="flabel">PRBS13</span><span class="m"><i>G</i>(<i>x</i>) = 1 + <i>x</i> + <i>x</i><span class="sup">2</span> + <i>x</i><span class="sup">12</span> + <i>x</i><span class="sup">13</span>,&nbsp;&nbsp;周期 = 2<span class="sup">13</span> − 1 = 8191</span></div>
+          <div class="fline"><span class="flabel">其它</span><span class="m">PRBS7 (127) / PRBS15 (32767) / PRBS31（需限长）</span></div>
+        </div>
         <div class="eli5"><span class="lbl">人话</span><p>PRBS 看起来随机，但完全可复现 —— 所以能在电脑里生成同一条序列去对齐波形。</p></div>
       </div>
     </div>
@@ -515,10 +538,11 @@ alignment_shift           命中的移位量</div>
     <div class="two-6-4">
       <div>
         <div class="eli5"><span class="lbl">人话</span><p>把一条长录音按「每小节」剪开，一摞叠起来。第 m 行就是每个小节里的第 m 个采样点 —— 这样「同一相位」的样本排到同一行，方便逐相位比较。</p></div>
-        <div class="formula">Y[m, n] = y[n·M + m]
-
-0 ≤ m &lt; M,   0 ≤ n &lt; N
-shape(Y) = M × N</div>
+        <div class="formula math">
+          <div class="fline"><span class="flabel">折叠</span><span class="m"><i>Y</i>[<i>m</i>, <i>n</i>] = <i>y</i>[<i>n</i>·<i>M</i> + <i>m</i>]</span></div>
+          <div class="fline"><span class="flabel">取值范围</span><span class="m">0 ≤ <i>m</i> &lt; <i>M</i>,&nbsp;&nbsp;0 ≤ <i>n</i> &lt; <i>N</i></span></div>
+          <div class="fline"><span class="flabel">形状</span><span class="m">shape(<i>Y</i>) = <i>M</i> × <i>N</i></span></div>
+        </div>
         <p><strong>M</strong> = 每 UI 采样数（行 = 相位），<strong>N</strong> = 参与拟合的符号数（列 = 第几个符号）。</p>
         <p>第 n 列正是第 n 个符号周期内那 M 个采样点，顺序与波形一致。</p>
       </div>
@@ -563,9 +587,11 @@ shape(Y) = M × N</div>
     <h2>设计矩阵 X：每一行是「延迟 r 个 UI 的符号」</h2>
     <div class="two-6-4">
       <div>
-        <div class="formula">X[r, n] = x[ mod(n + D_p − r, N) ]     0 ≤ r &lt; N_p
-X[N_p, n] = 1                          常数项 → 吸收直流偏置
-shape(X) = (N_p + 1) × N</div>
+        <div class="formula math">
+          <div class="fline"><span class="flabel">数据行</span><span class="m"><i>X</i>[<i>r</i>, <i>n</i>] = <i>x</i>[ mod(<i>n</i> + <i>D</i><span class="sub">p</span> − <i>r</i>, <i>N</i>) ],&nbsp;&nbsp;0 ≤ <i>r</i> &lt; <i>N</i><span class="sub">p</span></span></div>
+          <div class="fline"><span class="flabel">常数行</span><span class="m"><i>X</i>[<i>N</i><span class="sub">p</span>, <i>n</i>] = 1&nbsp;&nbsp;<span style="font-size:15px;color:#8fa3c2">（吸收直流偏置）</span></span></div>
+          <div class="fline"><span class="flabel">形状</span><span class="m">shape(<i>X</i>) = (<i>N</i><span class="sub">p</span> + 1) × <i>N</i></span></div>
+        </div>
         <ul>
           <li><span class="kbd">r = 0</span> 主光标，<span class="kbd">r &lt; D_p</span> 前游标，<span class="kbd">r &gt; D_p</span> 后游标；</li>
           <li>最后一行全 1：允许拟合出一个直流/共模偏移；</li>
@@ -608,11 +634,12 @@ shape(X) = (N_p + 1) × N</div>
     <h2>三行推导：从代价函数到正规方程</h2>
     <div class="two-6-4">
       <div>
-        <div class="formula">模型      Y ≈ P·X,     shape(P) = M × (N_p+1)
-代价      J(P) = ‖Y − PX‖²_F = tr[ (Y − PX)(Y − PX)ᵀ ]
-求梯度    ∂J/∂P = 2( PXXᵀ − YXᵀ )
-令梯度为零（XXᵀ 可逆）：
-          P̂ = Y·Xᵀ·(X·Xᵀ)⁻¹</div>
+        <div class="formula math">
+          <div class="fline"><span class="flabel">模型</span><span class="m"><i>Y</i> ≈ <i>P</i>·<i>X</i>,&nbsp;&nbsp;&nbsp;shape(<i>P</i>) = <i>M</i> × (<i>N</i><span class="sub">p</span> + 1)</span></div>
+          <div class="fline"><span class="flabel">代价函数</span><span class="m"><i>J</i>(<i>P</i>) = ‖<i>Y</i> − <i>PX</i>‖<span class="sub">F</span><span class="sup">2</span> = tr[&nbsp;(<i>Y</i> − <i>PX</i>)(<i>Y</i> − <i>PX</i>)<span class="sup">ᵀ</span>&nbsp;]</span></div>
+          <div class="fline"><span class="flabel">求梯度</span><span class="m">∂<i>J</i> / ∂<i>P</i> = 2(&nbsp;<i>PXX</i><span class="sup">ᵀ</span> − <i>YX</i><span class="sup">ᵀ</span>&nbsp;)</span></div>
+          <div class="fline"><span class="flabel">令梯度为零</span><span class="m"><i>P̂</i> = <i>Y</i>·<i>X</i><span class="sup">ᵀ</span>·(<i>X</i>·<i>X</i><span class="sup">ᵀ</span>)<span class="sup">−1</span></span></div>
+        </div>
         <p style="margin-top:10px">这是标准最小二乘的<strong>正规方程解</strong>：把 <span class="kbd">N</span> 个符号周期里所有相位的数据一起用上，对 <span class="kbd">N_p+1</span> 个未知量做一次全局拟合。</p>
       </div>
       <div>
@@ -666,13 +693,12 @@ shape(X) = (N_p + 1) × N</div>
     <h2>拟合波形、残差，以及「列优先」展开</h2>
     <div class="two-6-4">
       <div>
-        <div class="formula">拟合波形   Ŷ = P̂·X
-残差       E = Ŷ − Y          （拟合值 − 实测值）
-
-列优先展开（0-based）：
-  p[ r·M + m ] = P̂[m, r],   0 ≤ m &lt; M, 0 ≤ r &lt; N_p
-  e[ k ]       = E 的列优先展开
-  l[ k ]       = Ŷ 的列优先展开</div>
+        <div class="formula math">
+          <div class="fline"><span class="flabel">拟合波形</span><span class="m"><i>Ŷ</i> = <i>P̂</i>·<i>X</i></span></div>
+          <div class="fline"><span class="flabel">残差</span><span class="m"><i>E</i> = <i>Ŷ</i> − <i>Y</i>&nbsp;&nbsp;<span style="font-size:15px;color:#8fa3c2">（拟合值 − 实测值）</span></span></div>
+          <div class="fline"><span class="flabel">列优先展开</span><span class="m"><i>p</i>[<i>r</i>·<i>M</i> + <i>m</i>] = <i>P̂</i>[<i>m</i>, <i>r</i>],&nbsp;&nbsp;0 ≤ <i>m</i> &lt; <i>M</i>, 0 ≤ <i>r</i> &lt; <i>N</i><span class="sub">p</span></span></div>
+          <div class="fline"><span class="flabel"></span><span class="m"><i>e</i>[<i>k</i>] = <i>E</i> 的列优先展开,&nbsp;&nbsp;<i>l</i>[<i>k</i>] = <i>Ŷ</i> 的列优先展开</span></div>
+        </div>
         <p style="margin-top:10px">长度：<span class="kbd">p</span> 为 <span class="kbd">M·N_p</span>，<span class="kbd">e</span> 与 <span class="kbd">l</span> 为 <span class="kbd">M·N</span>。</p>
       </div>
       <div>
@@ -709,15 +735,16 @@ shape(X) = (N_p + 1) × N</div>
     <h2>脉冲的四组核心数字</h2>
     <div class="two">
       <div>
-        <div class="formula">稳态电压   v_f    = (1/M) · Σ p[k]
-脉冲峰值   p_max  = max p[k]
-峰值比     r_peak = p_max / v_f</div>
+        <div class="formula math">
+          <div class="fline"><span class="flabel">稳态电压</span><span class="m"><i>v</i><span class="sub">f</span> = <span class="frac"><span class="num">1</span><span class="den"><i>M</i></span></span> Σ<span class="sub">k</span> <i>p</i>[<i>k</i>]</span></div>
+          <div class="fline"><span class="flabel">脉冲峰值</span><span class="m"><i>p</i><span class="sub">max</span> = max<span class="sub">k</span> <i>p</i>[<i>k</i>]</span></div>
+          <div class="fline"><span class="flabel">峰值比</span><span class="m"><i>r</i><span class="sub">peak</span> = <span class="frac"><span class="num"><i>p</i><span class="sub">max</span></span><span class="den"><i>v</i><span class="sub">f</span></span></span></span></div>
+        </div>
         <p style="margin-top:8px"><span class="kbd">v_f</span> 是「把所有相位的脉冲加起来平均」，可理解为稳态幅度；理想情况下主峰附近的平均值应接近它。</p>
-        <div class="formula" style="margin-top:12px">残差 RMS（中央 80% 样本集 I_80）
-e_RMS,fit = √{ (1/|I_80|) · Σ e[k]² },  k ∈ I_80
-
-拟合 SNDR
-SNDR_fit[dB] = 20 log₁₀( p_max / e_RMS,fit )</div>
+        <div class="formula math" style="margin-top:12px">
+          <div class="fline"><span class="flabel">残差 RMS</span><span class="m"><i>e</i><span class="sub">RMS,fit</span> = √<u><span class="frac"><span class="num">1</span><span class="den">|<i>I</i><span class="sub">80</span>|</span></span> Σ<span class="sub">k∈I80</span> <i>e</i>[<i>k</i>]<span class="sup">2</span></u></span></div>
+          <div class="fline"><span class="flabel">拟合 SNDR</span><span class="m">SNDR<span class="sub">fit</span>[dB] = 20 log<span class="sub">10</span> <span class="frac"><span class="num"><i>p</i><span class="sub">max</span></span><span class="den"><i>e</i><span class="sub">RMS,fit</span></span></span></span></div>
+        </div>
       </div>
       <div>
         <div class="card"><h3>为什么要掐掉两端各 10%？</h3><p>记录首尾常有采集窗、触发与循环移位造成的不连续。中央 80% 更能代表稳态拟合质量。</p></div>
@@ -737,15 +764,12 @@ SNDR_fit[dB] = 20 log₁₀( p_max / e_RMS,fit )</div>
     <h2>残余 ISI：SNR_ISI 到底在量什么</h2>
     <div class="two-6-4">
       <div>
-        <div class="formula">把脉冲按主峰相位抽样：p_s[i] = p[i_peak·M 处的采样]
-
-i_peak = arg max_i p_s[i]
-
-忽略主峰之后的前 10 个 post-cursor，用其余尾部能量：
-
-                        p_s[i_peak]
-SNR_ISI[dB] = 20 log₁₀ ─────────────────────────
-                        √{ Σ p_s[i]² , i = i_peak+11 … N_p−1 }</div>
+        <div class="formula math">
+          <div class="fline"><span class="flabel">主峰相位抽样</span><span class="m"><i>p</i><span class="sub">s</span>[<i>i</i>] = <i>p</i>[&nbsp;<i>i</i><span class="sub">peak</span>·<i>M</i> 处的采样&nbsp;]</span></div>
+          <div class="fline"><span class="flabel">峰值位置</span><span class="m"><i>i</i><span class="sub">peak</span> = arg max<span class="sub">i</span> <i>p</i><span class="sub">s</span>[<i>i</i>]</span></div>
+          <div class="fline"><span class="flabel">统计口径</span><span class="m" style="font-size:16px">忽略主峰之后的前 10 个 post-cursor，只用其余尾部能量</span></div>
+          <div class="fline"><span class="flabel">SNR<span class="sub">ISI</span></span><span class="m">= 20 log<span class="sub">10</span>&nbsp;<span class="frac"><span class="num"><i>p</i><span class="sub">s</span>[<i>i</i><span class="sub">peak</span>]</span><span class="den">√<u>Σ <i>p</i><span class="sub">s</span>[<i>i</i>]<span class="sup">2</span>,&nbsp;<i>i</i> = <i>i</i><span class="sub">peak</span>+11 … <i>N</i><span class="sub">p</span>−1</u></span></span></span></div>
+        </div>
         <ul style="margin-top:10px">
           <li>它<strong>只</strong>描述有限拟合窗口末端残余的 ISI，<strong>不是</strong>通用噪声 SNR；</li>
           <li>跳过 10 个 post-cursor 是为了不和 FFE/DFE 要处理的部分重复计分；</li>
@@ -783,12 +807,11 @@ SNR_ISI[dB] = 20 log₁₀ ─────────────────�
     <div class="two-6-4">
       <div>
         <div class="eli5"><span class="lbl">人话</span><p>理想情况下，一个符号只应该在自己那一格产生影响。但通道把能量拖到了前后几格。均衡器就是一排「反向砝码」，把拖出去的能量抵消掉，让结果回到一根针的样子。</p></div>
-        <div class="formula">目标向量 x_p 的构造：
-  x_p[ D_p + 1 ] = 1      ← 1-based，主 tap 位置
-  其余元素 = 0
-
-FFE 问题：
-  ŵ = arg min_w ‖ P3·w − x_p ‖₂²</div>
+        <div class="formula math">
+          <div class="fline"><span class="flabel">目标向量</span><span class="m"><i>x</i><span class="sub">p</span>[&nbsp;<i>D</i><span class="sub">p</span> + 1&nbsp;] = 1&nbsp;&nbsp;<span style="font-size:15px;color:#8fa3c2">（1-based，主 tap 位置）</span></span></div>
+          <div class="fline"><span class="flabel">其余元素</span><span class="m">= 0</span></div>
+          <div class="fline"><span class="flabel">FFE 问题</span><span class="m"><i>ŵ</i> = arg min<span class="sub">w</span> ‖&nbsp;<i>P</i>3·<i>w</i> − <i>x</i><span class="sub">p</span>&nbsp;‖<span class="sub">2</span><span class="sup">2</span></span></div>
+        </div>
         <p style="margin-top:10px">也就是说：找到 <span class="kbd">N_w</span> 个系数，使脉冲卷积它们之后，<strong>最接近一个单位冲激</strong>。</p>
         <p><em>注意</em>：这是<strong>分析侧逆滤波器</strong>。GUI 默认 18 tap 表示「用 18 个系数看可恢复性」，不代表 DUT 硬件真有 18 个 tap。</p>
       </div>
@@ -825,16 +848,11 @@ FFE 问题：
     <h2>P3 卷积矩阵与 FFE 闭式解</h2>
     <div class="two-6-4">
       <div>
-        <div class="formula">把符号间隔脉冲 p_s 排成卷积矩阵 P3
-（每个 tap 对应一列，列内是移位后的 p_s，
-  并在窗口外置零）
-
-正规方程：
-  P3ᵀP3 · ŵ = P3ᵀ x_p
-
-闭式解：
-  ŵ = (P3ᵀP3)⁻¹ P3ᵀ x_p
-  firNum = ŵ</div>
+        <div class="formula math">
+          <div class="fline"><span class="flabel">卷积矩阵</span><span class="m"><i>P</i>3：每个 tap 一列，列内是移位后的 <i>p</i><span class="sub">s</span>，窗口外置零</span></div>
+          <div class="fline"><span class="flabel">正规方程</span><span class="m"><i>P</i>3<span class="sup">ᵀ</span><i>P</i>3 · <i>ŵ</i> = <i>P</i>3<span class="sup">ᵀ</span> <i>x</i><span class="sub">p</span></span></div>
+          <div class="fline"><span class="flabel">闭式解</span><span class="m"><i>ŵ</i> = (<i>P</i>3<span class="sup">ᵀ</span><i>P</i>3)<span class="sup">−1</span> <i>P</i>3<span class="sup">ᵀ</span> <i>x</i><span class="sub">p</span>&nbsp;&nbsp;&nbsp;firNum = <i>ŵ</i></span></div>
+        </div>
         <p style="margin-top:10px">形状：<span class="kbd">P3</span> 为 <span class="kbd">N_p × N_w</span>，<span class="kbd">x_p</span> 为 <span class="kbd">N_p × 1</span>，<span class="kbd">ŵ</span> 为 <span class="kbd">N_w × 1</span>。</p>
       </div>
       <div>
@@ -876,11 +894,15 @@ FFE 问题：
     <h2>两种归一化，别混用</h2>
     <div class="two">
       <div class="card"><h3>FFE-only：Σw = 1</h3>
-        <div class="formula" style="font-size:16px;padding:12px 14px">w_norm[i] = ŵ[i] / Σ ŵ[j]</div>
+        <div class="formula math center" style="padding:10px 14px">
+          <div class="fline"><span class="m"><i>w</i><span class="sub">norm</span>[<i>i</i>] =&nbsp;<span class="frac"><span class="num"><i>ŵ</i>[<i>i</i>]</span><span class="den">Σ<span class="sub">j</span> <i>ŵ</i>[<i>j</i>]</span></span></span></div>
+        </div>
         <p style="margin-top:8px">只保证<strong>直流增益为 1</strong>，不限制单个系数幅度。对应字段 <span class="kbd">firNumNorm</span>，用于画 Equalized Eye。</p>
       </div>
       <div class="card"><h3>FFE+DFE：Σ|w| = 1</h3>
-        <div class="formula" style="font-size:16px;padding:12px 14px">w_norm[i] = ŵ[i] / Σ |ŵ[j]|</div>
+        <div class="formula math center" style="padding:10px 14px">
+          <div class="fline"><span class="m"><i>w</i><span class="sub">norm</span>[<i>i</i>] =&nbsp;<span class="frac"><span class="num"><i>ŵ</i>[<i>i</i>]</span><span class="den">Σ<span class="sub">j</span> |<i>ŵ</i>[<i>j</i>]|</span></span></span></div>
+        </div>
         <p style="margin-top:8px">按 L1 归一，对应字段 <span class="kbd">firNumDFENorm</span>；FFE+DFE 分支主要用于 <strong>RLM 诊断</strong>。</p>
       </div>
     </div>
@@ -897,17 +919,12 @@ FFE 问题：
     <h2>DFE：把前几个后游标「交给判决反馈」</h2>
     <div class="two-6-4">
       <div>
-        <div class="formula">不再要求前 N_DFE 个 post-cursor 为 0，而是把
-目标改成脉冲自己的比值：
-
-  x_p[D_p + j] = p_s[i_peak + j] / p_s[i_peak]
-                 j = 1 … N_DFE
-
-这些值同时作为 DFE 抽头权重：DFEtapWeight
-
-反馈（硬判决之后）：
-  â[n]           = Q( z_FFE[n] )
-  z_after_DFE[n] = z_FFE[n] − Σ b[j]·â[n−j]</div>
+        <div class="formula math">
+          <div class="fline"><span class="flabel">新目标</span><span class="m"><i>x</i><span class="sub">p</span>[<i>D</i><span class="sub">p</span> + <i>j</i>] =&nbsp;<span class="frac"><span class="num"><i>p</i><span class="sub">s</span>[<i>i</i><span class="sub">peak</span> + <i>j</i>]</span><span class="den"><i>p</i><span class="sub">s</span>[<i>i</i><span class="sub">peak</span>]</span></span>&nbsp;&nbsp;&nbsp;<i>j</i> = 1 … <i>N</i><span class="sub">DFE</span></span></div>
+          <div class="fline"><span class="flabel">同时作为</span><span class="m">DFE 抽头权重 DFEtapWeight</span></div>
+          <div class="fline"><span class="flabel">硬判决</span><span class="m"><i>â</i>[<i>n</i>] = <i>Q</i>( <i>z</i><span class="sub">FFE</span>[<i>n</i>] )</span></div>
+          <div class="fline"><span class="flabel">反馈减法</span><span class="m"><i>z</i><span class="sub">after_DFE</span>[<i>n</i>] = <i>z</i><span class="sub">FFE</span>[<i>n</i>] − Σ<span class="sub">j</span> <i>b</i>[<i>j</i>]·<i>â</i>[<i>n</i>−<i>j</i>]</span></div>
+        </div>
       </div>
       <div>
         <div class="eli5"><span class="lbl">人话</span><p>FFE 是「事前」补偿：在判决前把波形整形。DFE 是「事后」补偿：既然前面的符号已经判出来了，就按它的电平把当前样本里残留的影响直接减掉。</p></div>
@@ -934,11 +951,12 @@ FFE 问题：
           <li>脉冲窗口太短，重要前后游标落在窗口外；</li>
           <li>通道零点或高度相关的列使 <span class="kbd">P3ᵀP3</span> 病态。</li>
         </ul>
-        <div class="formula" style="margin-top:10px">参数必须满足：
-  0 ≤ D_p
-  D_p + N_DFE &lt; N_p
-  0 ≤ D_w &lt; N_w ≤ N_p
-  N_w ≤ N_p  （否则必然奇异）</div>
+        <div class="formula math" style="margin-top:10px">
+          <div class="fline"><span class="flabel">参数约束</span><span class="m">0 ≤ <i>D</i><span class="sub">p</span></span></div>
+          <div class="fline"><span class="flabel"></span><span class="m"><i>D</i><span class="sub">p</span> + <i>N</i><span class="sub">DFE</span> &lt; <i>N</i><span class="sub">p</span></span></div>
+          <div class="fline"><span class="flabel"></span><span class="m">0 ≤ <i>D</i><span class="sub">w</span> &lt; <i>N</i><span class="sub">w</span> ≤ <i>N</i><span class="sub">p</span></span></div>
+          <div class="fline"><span class="flabel"></span><span class="m"><i>N</i><span class="sub">w</span> ≤ <i>N</i><span class="sub">p</span>&nbsp;&nbsp;<span style="font-size:15px;color:#8fa3c2">（否则必然奇异）</span></span></div>
+        </div>
       </div>
       <div>
         <div class="card"><h3>程序怎么处理</h3><ul>
@@ -1013,11 +1031,10 @@ necessarily singular</div>
     <div class="two-6-4">
       <div>
         <p>逐相位滤波产生 <span class="kbd">M</span> 条序列；把它们放回原始采样顺序，就得到「均衡后」的连续波形，用于画眼图：</p>
-        <div class="formula">矩阵 A 形状 (L_max × M)：
-  A[:, zz] = 第 zz 个相位的均衡输出
-
-按<em>行优先</em>展开回一维：
-  re_interleaved[(i)·M + zz] = A[i, zz]</div>
+        <div class="formula math">
+          <div class="fline"><span class="flabel">相位矩阵</span><span class="m"><i>A</i>[:, <i>zz</i>] = 第 <i>zz</i> 个相位的均衡输出,&nbsp;&nbsp;shape(<i>A</i>) = <i>L</i><span class="sub">max</span> × <i>M</i></span></div>
+          <div class="fline"><span class="flabel">行优先展开</span><span class="m">re_interleaved[<i>i</i>·<i>M</i> + <i>zz</i>] = <i>A</i>[<i>i</i>, <i>zz</i>]</span></div>
+        </div>
         <div class="warn"><span class="lbl">移植时最容易错的一行</span><p>这一步在 MATLAB 参考实现里是<strong>行主序</strong>平铺（<span class="kbd">(zz−1)*cols + kk</span> 且 zz 为行号）。若按列主序拼装，眼图与眼宽指标会整体错位 —— 本项目正是靠 golden 对比才发现并修正的。</p></div>
       </div>
       <div>
@@ -1037,23 +1054,20 @@ necessarily singular</div>
     <div class="two">
       <div>
         <h3>① 最小相邻间距 RLM_adj（字段 RLMbj）</h3>
-        <div class="formula" style="font-size:16.5px">阈值 −2/3, 0, +2/3 → 四组均值 V0…V3
-
-d_L = V1 − V0      d_M = V2 − V1      d_U = V3 − V2
-
-            3 · min(d_L, d_M, d_U)
-RLM_adj = ─────────────────────────
-                V3 − V0</div>
+        <div class="formula math">
+          <div class="fline"><span class="flabel">阈值分组</span><span class="m">−2/3,&nbsp;0,&nbsp;+2/3&nbsp;→&nbsp;四组均值 <i>V</i><span class="sub">0</span>, <i>V</i><span class="sub">1</span>, <i>V</i><span class="sub">2</span>, <i>V</i><span class="sub">3</span></span></div>
+          <div class="fline"><span class="flabel">相邻间距</span><span class="m"><i>d</i><span class="sub">L</span> = <i>V</i><span class="sub">1</span> − <i>V</i><span class="sub">0</span>&nbsp;&nbsp;&nbsp;<i>d</i><span class="sub">M</span> = <i>V</i><span class="sub">2</span> − <i>V</i><span class="sub">1</span>&nbsp;&nbsp;&nbsp;<i>d</i><span class="sub">U</span> = <i>V</i><span class="sub">3</span> − <i>V</i><span class="sub">2</span></span></div>
+          <div class="fline"><span class="flabel">RLM<span class="sub">adj</span></span><span class="m">=&nbsp;<span class="frac"><span class="num">3&nbsp;·&nbsp;min(<i>d</i><span class="sub">L</span>,&nbsp;<i>d</i><span class="sub">M</span>,&nbsp;<i>d</i><span class="sub">U</span>)</span><span class="den"><i>V</i><span class="sub">3</span> − <i>V</i><span class="sub">0</span></span></span></span></div>
+        </div>
         <p style="margin-top:8px">报告名 <span class="kbd">RLM (Min Adjacent Spacing)</span>；名字没有伪装成当前 IEEE 定义。</p>
       </div>
       <div>
         <h3>② IEEE 802.3bs / OIF CEI 定义（字段 RLMbs）</h3>
-        <div class="formula" style="font-size:16.5px">V_mid = ( V0 + V3 ) / 2
-
-ES1 = ( V1 − V_mid ) / ( V0 − V_mid )
-ES2 = ( V2 − V_mid ) / ( V3 − V_mid )
-
-RLM = min( 3·ES1, 3·ES2, 2−3·ES1, 2−3·ES2 )</div>
+        <div class="formula math">
+          <div class="fline"><span class="flabel">电平中点</span><span class="m"><i>V</i><span class="sub">mid</span> = (<i>V</i><span class="sub">0</span> + <i>V</i><span class="sub">3</span>) / 2</span></div>
+          <div class="fline"><span class="flabel">内层归一</span><span class="m">ES<span class="sub">1</span> =&nbsp;<span class="frac"><span class="num"><i>V</i><span class="sub">1</span> − <i>V</i><span class="sub">mid</span></span><span class="den"><i>V</i><span class="sub">0</span> − <i>V</i><span class="sub">mid</span></span></span>&nbsp;&nbsp;&nbsp;ES<span class="sub">2</span> =&nbsp;<span class="frac"><span class="num"><i>V</i><span class="sub">2</span> − <i>V</i><span class="sub">mid</span></span><span class="den"><i>V</i><span class="sub">3</span> − <i>V</i><span class="sub">mid</span></span></span></span></div>
+          <div class="fline"><span class="flabel">RLM</span><span class="m">=&nbsp;min(&nbsp;3·ES<span class="sub">1</span>,&nbsp;3·ES<span class="sub">2</span>,&nbsp;2&nbsp;−&nbsp;3·ES<span class="sub">1</span>,&nbsp;2&nbsp;−&nbsp;3·ES<span class="sub">2</span>&nbsp;)</span></div>
+        </div>
         <p style="margin-top:8px">理想 PAM4 中 <span class="kbd">ES1 = ES2 = 1/3</span>，四项都是 1 ⇒ RLM = 1。</p>
       </div>
     </div>
@@ -1070,19 +1084,19 @@ RLM = min( 3·ES1, 3·ES2, 2−3·ES1, 2−3·ES2 )</div>
     <h2>协议 SNDR 与工具 SNDR：一字之差</h2>
     <div class="two">
       <div class="card"><h3>标准（OIF CEI-05.3 等）</h3>
-        <div class="formula" style="font-size:17px;padding:12px 14px">                      p_max²
-SNDR_std[dB] = 10 log₁₀ ──────────
-                     σ_e² + σ_n²</div>
+        <div class="formula math center">
+          <div class="fline"><span class="m">SNDR<span class="sub">std</span>[dB]&nbsp;=&nbsp;10&nbsp;log<span class="sub">10</span>&nbsp;<span class="frac"><span class="num"><i>p</i><span class="sub">max</span><span class="sup">2</span></span><span class="den">σ<span class="sub">e</span><span class="sup">2</span>&nbsp;+&nbsp;σ<span class="sub">n</span><span class="sup">2</span></span></span></span></div>
+        </div>
         <ul style="margin-top:8px">
           <li><span class="kbd">σ_e</span>：线性拟合误差的标准差；</li>
           <li><span class="kbd">σ_n</span>：在规定条件下（如 ≥6 个相同符号连续区间、固定相位）单独测得的噪声；</li>
-          <li>功率相加 ⇒ 用 <strong>10 log₁₀</strong>。</li>
+          <li>分子分母都是<strong>功率</strong>（幅度平方）⇒ 用 <span class="kbd">10 log₁₀</span>；写成等效幅度比时才出现 <span class="kbd">20 log₁₀</span>。</li>
         </ul>
       </div>
       <div class="card"><h3>本工具</h3>
-        <div class="formula" style="font-size:17px;padding:12px 14px">                      p_max²
-SNDR_fit[dB] = 10 log₁₀ ───────────
-                     e_RMS,fit²</div>
+        <div class="formula math center">
+          <div class="fline"><span class="m">SNDR<span class="sub">fit</span>[dB]&nbsp;=&nbsp;10&nbsp;log<span class="sub">10</span>&nbsp;<span class="frac"><span class="num"><i>p</i><span class="sub">max</span><span class="sup">2</span></span><span class="den"><i>e</i><span class="sub">RMS,fit</span><span class="sup">2</span></span></span></span></div>
+        </div>
         <ul style="margin-top:8px">
           <li>不单独测 <span class="kbd">σ_n</span>；</li>
           <li>用中央 80% 残差 RMS 代替完整测量流程；</li>
@@ -1102,11 +1116,13 @@ SNDR_fit[dB] = 10 log₁₀ ───────────
     <h2>测量派生传递函数：从脉冲反推频响</h2>
     <div class="two-6-4">
       <div>
-        <div class="formula">① 理想脉冲 p_ideal：幅度 max|p|、宽 1 UI、上升/下降 1 fs
-② P(f) = DFT{p[k]},   P_ideal(f) = DFT{p_ideal[k]}
-③ H̃(f) = |P(f)| / |P_ideal(f)|,   H(f) = H̃(f) / H̃(0)
-④ Nyquist：H_Nq[dB] = 20 log₁₀ |H(R_s/2)|
-⑤ BW 3dB：第一个 20log₁₀|H(f)| ≤ −3 的频点</div>
+        <div class="formula math">
+          <div class="fline"><span class="flabel">① 理想脉冲</span><span class="m"><i>p</i><span class="sub">ideal</span>：幅度 max|<i>p</i>|、宽 1 UI、上升/下降 1 fs</span></div>
+          <div class="fline"><span class="flabel">② 变换</span><span class="m"><i>P</i>(<i>f</i>) = DFT{<i>p</i>[<i>k</i>]},&nbsp;&nbsp;&nbsp;<i>P</i><span class="sub">ideal</span>(<i>f</i>) = DFT{<i>p</i><span class="sub">ideal</span>[<i>k</i>]}</span></div>
+          <div class="fline"><span class="flabel">③ 幅频比</span><span class="m"><i>H&#771;</i>(<i>f</i>) =&nbsp;<span class="frac"><span class="num">|<i>P</i>(<i>f</i>)|</span><span class="den">|<i>P</i><span class="sub">ideal</span>(<i>f</i>)|</span></span>&nbsp;&nbsp;&nbsp;<i>H</i>(<i>f</i>) = <i>H&#771;</i>(<i>f</i>) / <i>H&#771;</i>(0) = 1</span></div>
+          <div class="fline"><span class="flabel">④ Nyquist</span><span class="m"><i>H</i><span class="sub">Nq</span>[dB] = 20 log<span class="sub">10</span> |<i>H</i>(<i>R</i><span class="sub">s</span>/2)|</span></div>
+          <div class="fline"><span class="flabel">⑤ BW 3 dB</span><span class="m">第一个满足 20 log<span class="sub">10</span>|<i>H</i>(<i>f</i>)| ≤ −3 的频点</span></div>
+        </div>
         <p style="margin-top:8px">理想脉冲频谱的零点会让分母趋零，程序<strong>先剔除近零频点再线性插值</strong>补回分母。</p>
       </div>
       <div>
@@ -1126,12 +1142,13 @@ SNDR_fit[dB] = 10 log₁₀ ───────────
     <h2>95% 与 99% 眼宽：为什么不能只数过零点</h2>
     <div class="two-6-4">
       <div>
-        <div class="formula">① 过零相位（线性插值）：
-   φ[i] = mod( k − y[k] / (y[k+1] − y[k]), M )
-② 圆均值求中心：φ_mean = [M/2π]·arg{ Σ exp( j·2π·φ[i]/M ) }
-③ 展开到 ±半 UI：δ[i] = mod( φ[i] − φ_mean + M/2, M ) − M/2
-④ 中央 99% 跨度：Δ = Q_0.995{δ} − Q_0.005{δ}
-⑤ 眼宽：W = clip( 1 − Δ/M, 0, 1 )   [UI]</div>
+        <div class="formula math">
+          <div class="fline"><span class="flabel">① 过零相位</span><span class="m">φ[<i>i</i>] = mod(&nbsp;<i>k</i> −&nbsp;<span class="frac"><span class="num"><i>y</i>[<i>k</i>]</span><span class="den"><i>y</i>[<i>k</i>+1] − <i>y</i>[<i>k</i>]</span></span>,&nbsp;<i>M</i>&nbsp;)</span></div>
+          <div class="fline"><span class="flabel">② crossing 中心</span><span class="m">φ<span class="sub">mean</span> = [<i>M</i>/2π] · arg{&nbsp;Σ exp( j·2π·φ[<i>i</i>]/<i>M</i> )&nbsp;}</span></div>
+          <div class="fline"><span class="flabel">③ 展开到 ±半 UI</span><span class="m">δ[<i>i</i>] = mod( φ[<i>i</i>] − φ<span class="sub">mean</span> + <i>M</i>/2,&nbsp;<i>M</i> ) − <i>M</i>/2</span></div>
+          <div class="fline"><span class="flabel">④ 中央 99% 跨度</span><span class="m">Δ = <i>Q</i><span class="sub">0.995</span>{δ} − <i>Q</i><span class="sub">0.005</span>{δ}</span></div>
+          <div class="fline"><span class="flabel">⑤ 眼宽</span><span class="m"><i>W</i> = clip( 1 − Δ/<i>M</i>,&nbsp;0,&nbsp;1 )&nbsp;&nbsp;[UI]</span></div>
+        </div>
         <p style="margin-top:8px">53.125 GBd 时 1 UI ≈ 18.824 ps；4 ps ≈ 0.2125 UI。</p>
       </div>
       <div>
@@ -1337,9 +1354,11 @@ python python_src/run_tx_linear_fit.py --filetype lab_txt --filename "C:/path/to
 <span class="cmt"># ② 只有电压（必须显式指定 OSR）</span>
 python python_src/run_tx_linear_fit.py --filetype lab_csv --filename "C:/path/to/Waveform.csv" --osr 16 --symbol_rate 53.125e9 --modulation PAM4 --prbs_pattern PRBS13 --pattern_length 8191 --pre_cursor_fit 4 --total_cursor_fit 32 --pre_cursor_ffe 4 --total_cursor_ffe 18 --dfe_tap_num 1 --output-dir outputs/run</div>
     <div class="two" style="margin-top:14px">
-      <div class="card"><h3>参数之间的关系</h3><div class="formula" style="font-size:15px;padding:10px 12px">0 ≤ D_p
-D_p + N_DFE &lt; N_p
-0 ≤ D_w &lt; N_w ≤ N_p</div></div>
+      <div class="card"><h3>参数之间的关系</h3><div class="formula math" style="padding:10px 12px">
+            <div class="fline"><span class="m" style="font-size:17px">0 ≤ <i>D</i><span class="sub">p</span></span></div>
+            <div class="fline"><span class="m" style="font-size:17px"><i>D</i><span class="sub">p</span> + <i>N</i><span class="sub">DFE</span> &lt; <i>N</i><span class="sub">p</span></span></div>
+            <div class="fline"><span class="m" style="font-size:17px">0 ≤ <i>D</i><span class="sub">w</span> &lt; <i>N</i><span class="sub">w</span> ≤ <i>N</i><span class="sub">p</span></span></div>
+          </div></div>
       <div class="card"><h3>选择建议</h3><ul>
         <li><span class="kbd">pre_cursor_fit</span> 覆盖可见前游标；<span class="kbd">total_cursor_fit</span> 覆盖主要 pulse tail；</li>
         <li>tap 不是越多越好：过长会让逆滤波追逐噪声；</li>
@@ -1540,6 +1559,8 @@ D_p + N_DFE &lt; N_p
         continue;
       }
       var h = b.scrollHeight;
+      var ovf = b.scrollWidth - b.clientWidth;
+      slides[i].setAttribute('data-ovf-x', String(ovf > 0 ? ovf : 0));
       var s = h > avail ? (avail / h) : 1;
       b.style.transform = s < 0.999 ? 'scale(' + s.toFixed(4) + ')' : 'none';
       slides[i].setAttribute('data-content-px', String(h));

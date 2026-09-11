@@ -54,11 +54,11 @@ Data,<span class="cmt">&lt;-- 同样含尾随空格</span>
     <div class="eli5"><span class="lbl">人话</span><p>先量出「相邻采样点平均隔多久」，再用符号率换算：一个符号被切成了几段。</p></div>
     <div class="two-6-4">
       <div>
-        <div class="formula"><span style="text-decoration:overline">t</span> = 相邻采样间隔的中位数（平均采样间隔）
-     <span style="text-decoration:overline">t</span> = median{ t[k+1] − t[k] },  0 ≤ k &lt; N_s−1
-
-M_native    = 1 / (R_s · <span style="text-decoration:overline">t</span>)                           局部采样密度
-M_effective = (N_s − 1) / { R_s · [t[N_s−1] − t[0]] }   整段平均采样密度</div>
+        <div class="formula math">
+          <div class="fline"><span class="flabel">平均采样间隔</span><span class="m"><span style="text-decoration:overline"><i>t</i></span> = median{ <i>t</i>[<i>k</i>+1] − <i>t</i>[<i>k</i>] },&nbsp;&nbsp;0 ≤ <i>k</i> &lt; <i>N</i><span class="sub">s</span> − 1</span></div>
+          <div class="fline"><span class="flabel">局部采样密度</span><span class="m"><i>M</i><span class="sub">native</span> = 1 / (<i>R</i><span class="sub">s</span> · <span style="text-decoration:overline"><i>t</i></span>)</span></div>
+          <div class="fline"><span class="flabel">整段平均密度</span><span class="m"><i>M</i><span class="sub">effective</span> = (<i>N</i><span class="sub">s</span> − 1) / [ <i>R</i><span class="sub">s</span> · (<i>t</i>[<i>N</i><span class="sub">s</span>−1] − <i>t</i>[0]) ]</span></div>
+        </div>
         <h3>自动模式接受条件（全部满足）</h3>
         <ul>
           <li><span class="kbd">M_native</span> 与 <span class="kbd">M_effective</span> 取整后<strong>一致</strong>；</li>
@@ -84,7 +84,9 @@ M_effective = (N_s − 1) / { R_s · [t[N_s−1] − t[0]] }   整段平均采�
     <h2>落到均匀分析网格上</h2>
     <div class="two-6-4">
       <div>
-        <div class="formula">t_grid[k] = t[0] + k / (M · R_s),   k = 0 … N_grid−1</div>
+        <div class="formula math center">
+          <div class="fline"><span class="m"><i>t</i><span class="sub">grid</span>[<i>k</i>] = <i>t</i>[0] + <i>k</i> / (<i>M</i> · <i>R</i><span class="sub">s</span>),&nbsp;&nbsp;<i>k</i> = 0 … <i>N</i><span class="sub">grid</span> − 1</span></div>
+        </div>
         <ul>
           <li>带时间轴的波形用<strong>线性插值</strong>搬到这条网格上；</li>
           <li>只有电压的文件不做插值，直接按给定 OSR 解释；</li>
@@ -121,8 +123,10 @@ M_effective = (N_s − 1) / { R_s · [t[N_s−1] − t[0]] }   整段平均采�
       </div>
       <div>
         <h3>PRBS 多项式与周期</h3>
-        <div class="formula">PRBS13: G(x) = 1 + x + x² + x¹² + x¹³,  周期 = 2¹³ − 1 = 8191
-其它：PRBS7 (127) / PRBS15 (32767) / PRBS31（需限长）</div>
+        <div class="formula math">
+          <div class="fline"><span class="flabel">PRBS13</span><span class="m"><i>G</i>(<i>x</i>) = 1 + <i>x</i> + <i>x</i><span class="sup">2</span> + <i>x</i><span class="sup">12</span> + <i>x</i><span class="sup">13</span>,&nbsp;&nbsp;周期 = 2<span class="sup">13</span> − 1 = 8191</span></div>
+          <div class="fline"><span class="flabel">其它</span><span class="m">PRBS7 (127) / PRBS15 (32767) / PRBS31（需限长）</span></div>
+        </div>
         <div class="eli5"><span class="lbl">人话</span><p>PRBS 看起来随机，但完全可复现 —— 所以能在电脑里生成同一条序列去对齐波形。</p></div>
       </div>
     </div>

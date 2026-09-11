@@ -69,6 +69,8 @@
         continue;
       }
       var h = b.scrollHeight;
+      var ovf = b.scrollWidth - b.clientWidth;
+      slides[i].setAttribute('data-ovf-x', String(ovf > 0 ? ovf : 0));
       var s = h > avail ? (avail / h) : 1;
       b.style.transform = s < 0.999 ? 'scale(' + s.toFixed(4) + ')' : 'none';
       slides[i].setAttribute('data-content-px', String(h));

@@ -12,6 +12,7 @@
     --line:rgba(255,255,255,.10); --grid:rgba(255,255,255,.045);
     --mono:"Cascadia Code","JetBrains Mono",Consolas,"SF Mono",Menlo,monospace;
     --sans:"Segoe UI","PingFang SC","Microsoft YaHei",system-ui,-apple-system,sans-serif;
+    --math:"Cambria Math",Cambria,"Times New Roman","Segoe UI Symbol",Georgia,serif;
   }
   *{box-sizing:border-box}
   html,body{margin:0;padding:0;background:var(--bg);color:var(--ink);font-family:var(--sans)}
@@ -54,6 +55,24 @@
   .code .cmt{color:#6f86a8}
   .formula{background:#070d19;border:1px solid var(--line);border-radius:12px;padding:14px 18px;font-family:var(--mono);font-size:18.5px;line-height:1.7;color:#dbeafe;white-space:pre;overflow:auto}
   .formula em{color:var(--accent2);font-style:normal}
+  /* ---- math typesetting: real fractions, sub/superscripts, aligned lines ---- */
+  .formula.math{white-space:normal;font-family:var(--sans);padding:12px 16px}
+  .formula.math .fline{display:grid;grid-template-columns:auto 1fr;gap:2px 16px;align-items:baseline;padding:3px 0}
+  .formula.math .fline+.fline{border-top:1px solid rgba(255,255,255,.055)}
+  .formula.math .flabel{font-size:14.5px;color:var(--muted);white-space:nowrap;font-family:var(--sans)}
+  .formula.math.center{text-align:center}
+  .formula.math.center .fline{grid-template-columns:1fr}
+  .m{font-family:var(--math);font-size:20px;line-height:1.45;color:#eaf2ff;white-space:nowrap;letter-spacing:.01em}
+  .m i{font-style:italic;font-family:inherit}
+  .m u{text-decoration:none;border-bottom:1px solid rgba(232,241,255,.55)}
+  .m .sub{font-size:.7em;font-family:var(--math);vertical-align:-.28em;padding:0 .02em}
+  .m .sup{font-size:.7em;font-family:var(--math);vertical-align:.5em;padding:0 .02em}
+  .m .fn{font-style:normal;padding-right:.12em}
+  .frac{display:inline-flex;flex-direction:column;align-items:center;vertical-align:-.55em;margin:0 .22em}
+  .frac>span{padding:0 .34em;line-height:1.3;font-family:var(--math);white-space:nowrap}
+  .frac>.num{border-bottom:1.35px solid #93aecf}
+  .frac>.den{padding-top:2px}
+  .m sub,.m sup{font-family:var(--math)}
   table{border-collapse:collapse;width:100%;font-size:15.5px}
   th,td{border-bottom:1px solid var(--line);padding:7px 10px;text-align:left;color:var(--ink2)}
   th{color:var(--accent);font-weight:700;font-size:14px;letter-spacing:.04em}

@@ -19,10 +19,11 @@
     <div class="two-6-4">
       <div>
         <div class="eli5"><span class="lbl">人话</span><p>把一条长录音按「每小节」剪开，一摞叠起来。第 m 行就是每个小节里的第 m 个采样点 —— 这样「同一相位」的样本排到同一行，方便逐相位比较。</p></div>
-        <div class="formula">Y[m, n] = y[n·M + m]
-
-0 ≤ m &lt; M,   0 ≤ n &lt; N
-shape(Y) = M × N</div>
+        <div class="formula math">
+          <div class="fline"><span class="flabel">折叠</span><span class="m"><i>Y</i>[<i>m</i>, <i>n</i>] = <i>y</i>[<i>n</i>·<i>M</i> + <i>m</i>]</span></div>
+          <div class="fline"><span class="flabel">取值范围</span><span class="m">0 ≤ <i>m</i> &lt; <i>M</i>,&nbsp;&nbsp;0 ≤ <i>n</i> &lt; <i>N</i></span></div>
+          <div class="fline"><span class="flabel">形状</span><span class="m">shape(<i>Y</i>) = <i>M</i> × <i>N</i></span></div>
+        </div>
         <p><strong>M</strong> = 每 UI 采样数（行 = 相位），<strong>N</strong> = 参与拟合的符号数（列 = 第几个符号）。</p>
         <p>第 n 列正是第 n 个符号周期内那 M 个采样点，顺序与波形一致。</p>
       </div>
@@ -67,9 +68,11 @@ shape(Y) = M × N</div>
     <h2>设计矩阵 X：每一行是「延迟 r 个 UI 的符号」</h2>
     <div class="two-6-4">
       <div>
-        <div class="formula">X[r, n] = x[ mod(n + D_p − r, N) ]     0 ≤ r &lt; N_p
-X[N_p, n] = 1                          常数项 → 吸收直流偏置
-shape(X) = (N_p + 1) × N</div>
+        <div class="formula math">
+          <div class="fline"><span class="flabel">数据行</span><span class="m"><i>X</i>[<i>r</i>, <i>n</i>] = <i>x</i>[ mod(<i>n</i> + <i>D</i><span class="sub">p</span> − <i>r</i>, <i>N</i>) ],&nbsp;&nbsp;0 ≤ <i>r</i> &lt; <i>N</i><span class="sub">p</span></span></div>
+          <div class="fline"><span class="flabel">常数行</span><span class="m"><i>X</i>[<i>N</i><span class="sub">p</span>, <i>n</i>] = 1&nbsp;&nbsp;<span style="font-size:15px;color:#8fa3c2">（吸收直流偏置）</span></span></div>
+          <div class="fline"><span class="flabel">形状</span><span class="m">shape(<i>X</i>) = (<i>N</i><span class="sub">p</span> + 1) × <i>N</i></span></div>
+        </div>
         <ul>
           <li><span class="kbd">r = 0</span> 主光标，<span class="kbd">r &lt; D_p</span> 前游标，<span class="kbd">r &gt; D_p</span> 后游标；</li>
           <li>最后一行全 1：允许拟合出一个直流/共模偏移；</li>
@@ -112,11 +115,12 @@ shape(X) = (N_p + 1) × N</div>
     <h2>三行推导：从代价函数到正规方程</h2>
     <div class="two-6-4">
       <div>
-        <div class="formula">模型      Y ≈ P·X,     shape(P) = M × (N_p+1)
-代价      J(P) = ‖Y − PX‖²_F = tr[ (Y − PX)(Y − PX)ᵀ ]
-求梯度    ∂J/∂P = 2( PXXᵀ − YXᵀ )
-令梯度为零（XXᵀ 可逆）：
-          P̂ = Y·Xᵀ·(X·Xᵀ)⁻¹</div>
+        <div class="formula math">
+          <div class="fline"><span class="flabel">模型</span><span class="m"><i>Y</i> ≈ <i>P</i>·<i>X</i>,&nbsp;&nbsp;&nbsp;shape(<i>P</i>) = <i>M</i> × (<i>N</i><span class="sub">p</span> + 1)</span></div>
+          <div class="fline"><span class="flabel">代价函数</span><span class="m"><i>J</i>(<i>P</i>) = ‖<i>Y</i> − <i>PX</i>‖<span class="sub">F</span><span class="sup">2</span> = tr[&nbsp;(<i>Y</i> − <i>PX</i>)(<i>Y</i> − <i>PX</i>)<span class="sup">ᵀ</span>&nbsp;]</span></div>
+          <div class="fline"><span class="flabel">求梯度</span><span class="m">∂<i>J</i> / ∂<i>P</i> = 2(&nbsp;<i>PXX</i><span class="sup">ᵀ</span> − <i>YX</i><span class="sup">ᵀ</span>&nbsp;)</span></div>
+          <div class="fline"><span class="flabel">令梯度为零</span><span class="m"><i>P̂</i> = <i>Y</i>·<i>X</i><span class="sup">ᵀ</span>·(<i>X</i>·<i>X</i><span class="sup">ᵀ</span>)<span class="sup">−1</span></span></div>
+        </div>
         <p style="margin-top:10px">这是标准最小二乘的<strong>正规方程解</strong>：把 <span class="kbd">N</span> 个符号周期里所有相位的数据一起用上，对 <span class="kbd">N_p+1</span> 个未知量做一次全局拟合。</p>
       </div>
       <div>
@@ -170,13 +174,12 @@ shape(X) = (N_p + 1) × N</div>
     <h2>拟合波形、残差，以及「列优先」展开</h2>
     <div class="two-6-4">
       <div>
-        <div class="formula">拟合波形   Ŷ = P̂·X
-残差       E = Ŷ − Y          （拟合值 − 实测值）
-
-列优先展开（0-based）：
-  p[ r·M + m ] = P̂[m, r],   0 ≤ m &lt; M, 0 ≤ r &lt; N_p
-  e[ k ]       = E 的列优先展开
-  l[ k ]       = Ŷ 的列优先展开</div>
+        <div class="formula math">
+          <div class="fline"><span class="flabel">拟合波形</span><span class="m"><i>Ŷ</i> = <i>P̂</i>·<i>X</i></span></div>
+          <div class="fline"><span class="flabel">残差</span><span class="m"><i>E</i> = <i>Ŷ</i> − <i>Y</i>&nbsp;&nbsp;<span style="font-size:15px;color:#8fa3c2">（拟合值 − 实测值）</span></span></div>
+          <div class="fline"><span class="flabel">列优先展开</span><span class="m"><i>p</i>[<i>r</i>·<i>M</i> + <i>m</i>] = <i>P̂</i>[<i>m</i>, <i>r</i>],&nbsp;&nbsp;0 ≤ <i>m</i> &lt; <i>M</i>, 0 ≤ <i>r</i> &lt; <i>N</i><span class="sub">p</span></span></div>
+          <div class="fline"><span class="flabel"></span><span class="m"><i>e</i>[<i>k</i>] = <i>E</i> 的列优先展开,&nbsp;&nbsp;<i>l</i>[<i>k</i>] = <i>Ŷ</i> 的列优先展开</span></div>
+        </div>
         <p style="margin-top:10px">长度：<span class="kbd">p</span> 为 <span class="kbd">M·N_p</span>，<span class="kbd">e</span> 与 <span class="kbd">l</span> 为 <span class="kbd">M·N</span>。</p>
       </div>
       <div>
@@ -213,15 +216,16 @@ shape(X) = (N_p + 1) × N</div>
     <h2>脉冲的四组核心数字</h2>
     <div class="two">
       <div>
-        <div class="formula">稳态电压   v_f    = (1/M) · Σ p[k]
-脉冲峰值   p_max  = max p[k]
-峰值比     r_peak = p_max / v_f</div>
+        <div class="formula math">
+          <div class="fline"><span class="flabel">稳态电压</span><span class="m"><i>v</i><span class="sub">f</span> = <span class="frac"><span class="num">1</span><span class="den"><i>M</i></span></span> Σ<span class="sub">k</span> <i>p</i>[<i>k</i>]</span></div>
+          <div class="fline"><span class="flabel">脉冲峰值</span><span class="m"><i>p</i><span class="sub">max</span> = max<span class="sub">k</span> <i>p</i>[<i>k</i>]</span></div>
+          <div class="fline"><span class="flabel">峰值比</span><span class="m"><i>r</i><span class="sub">peak</span> = <span class="frac"><span class="num"><i>p</i><span class="sub">max</span></span><span class="den"><i>v</i><span class="sub">f</span></span></span></span></div>
+        </div>
         <p style="margin-top:8px"><span class="kbd">v_f</span> 是「把所有相位的脉冲加起来平均」，可理解为稳态幅度；理想情况下主峰附近的平均值应接近它。</p>
-        <div class="formula" style="margin-top:12px">残差 RMS（中央 80% 样本集 I_80）
-e_RMS,fit = √{ (1/|I_80|) · Σ e[k]² },  k ∈ I_80
-
-拟合 SNDR
-SNDR_fit[dB] = 20 log₁₀( p_max / e_RMS,fit )</div>
+        <div class="formula math" style="margin-top:12px">
+          <div class="fline"><span class="flabel">残差 RMS</span><span class="m"><i>e</i><span class="sub">RMS,fit</span> = √<u><span class="frac"><span class="num">1</span><span class="den">|<i>I</i><span class="sub">80</span>|</span></span> Σ<span class="sub">k∈I80</span> <i>e</i>[<i>k</i>]<span class="sup">2</span></u></span></div>
+          <div class="fline"><span class="flabel">拟合 SNDR</span><span class="m">SNDR<span class="sub">fit</span>[dB] = 20 log<span class="sub">10</span> <span class="frac"><span class="num"><i>p</i><span class="sub">max</span></span><span class="den"><i>e</i><span class="sub">RMS,fit</span></span></span></span></div>
+        </div>
       </div>
       <div>
         <div class="card"><h3>为什么要掐掉两端各 10%？</h3><p>记录首尾常有采集窗、触发与循环移位造成的不连续。中央 80% 更能代表稳态拟合质量。</p></div>
@@ -241,15 +245,12 @@ SNDR_fit[dB] = 20 log₁₀( p_max / e_RMS,fit )</div>
     <h2>残余 ISI：SNR_ISI 到底在量什么</h2>
     <div class="two-6-4">
       <div>
-        <div class="formula">把脉冲按主峰相位抽样：p_s[i] = p[i_peak·M 处的采样]
-
-i_peak = arg max_i p_s[i]
-
-忽略主峰之后的前 10 个 post-cursor，用其余尾部能量：
-
-                        p_s[i_peak]
-SNR_ISI[dB] = 20 log₁₀ ─────────────────────────
-                        √{ Σ p_s[i]² , i = i_peak+11 … N_p−1 }</div>
+        <div class="formula math">
+          <div class="fline"><span class="flabel">主峰相位抽样</span><span class="m"><i>p</i><span class="sub">s</span>[<i>i</i>] = <i>p</i>[&nbsp;<i>i</i><span class="sub">peak</span>·<i>M</i> 处的采样&nbsp;]</span></div>
+          <div class="fline"><span class="flabel">峰值位置</span><span class="m"><i>i</i><span class="sub">peak</span> = arg max<span class="sub">i</span> <i>p</i><span class="sub">s</span>[<i>i</i>]</span></div>
+          <div class="fline"><span class="flabel">统计口径</span><span class="m" style="font-size:16px">忽略主峰之后的前 10 个 post-cursor，只用其余尾部能量</span></div>
+          <div class="fline"><span class="flabel">SNR<span class="sub">ISI</span></span><span class="m">= 20 log<span class="sub">10</span>&nbsp;<span class="frac"><span class="num"><i>p</i><span class="sub">s</span>[<i>i</i><span class="sub">peak</span>]</span><span class="den">√<u>Σ <i>p</i><span class="sub">s</span>[<i>i</i>]<span class="sup">2</span>,&nbsp;<i>i</i> = <i>i</i><span class="sub">peak</span>+11 … <i>N</i><span class="sub">p</span>−1</u></span></span></span></div>
+        </div>
         <ul style="margin-top:10px">
           <li>它<strong>只</strong>描述有限拟合窗口末端残余的 ISI，<strong>不是</strong>通用噪声 SNR；</li>
           <li>跳过 10 个 post-cursor 是为了不和 FFE/DFE 要处理的部分重复计分；</li>

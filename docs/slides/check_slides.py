@@ -3,9 +3,12 @@
 from __future__ import annotations
 
 import html.parser
+import io
 import os
 import re
 import sys
+
+sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8')
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 DECK = os.path.join(HERE, 'tx_linear_fit_training.html')
@@ -83,10 +86,22 @@ def main() -> int:
         failures.append('unclosed at EOF: ' + ', '.join(checker.stack[:6]))
 
     required = [
-        'P̂ = Y·Xᵀ·(X·Xᵀ)⁻¹', 'SNR_ISI', 'ES1', 'RLM', 'known deviation',
-        'Python', 'Data, ', 'SNR_ISI[dB]', 'freqz', 'colon',
+        # algorithm content that must survive edits
+        'class="formula math"', 'class="frac"', 'known deviation',
+        'Data, ', 'freqz', 'colon', 'RLM', 'ISI', 'Nyquist',
+        'shape(<i>P</i>)', 'RLM<span class="sub">adj</span>',
+        'SNDR<span class="sub">fit</span>', 'SNDR<span class="sub">std</span>',
     ]
     missing = [r for r in required if r not in src]
+
+    # regression guard: no more ASCII-art fractions or aligned-blank math
+    ascii_math = re.findall(r'[\u2500]{3,}', src)
+    if ascii_math:
+        failures.append('ASCII-art fraction bars left in the deck: ' +
+                        str(len(ascii_math)))
+    if src.count('class="frac"') < 8:
+        failures.append('expected >= 8 real fractions, found ' +
+                        str(src.count('class="frac"')))
     if missing:
         failures.append('missing content markers: ' + ', '.join(missing))
 

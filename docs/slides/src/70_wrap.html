@@ -22,9 +22,11 @@ python python_src/run_tx_linear_fit.py --filetype lab_txt --filename "C:/path/to
 <span class="cmt"># ② 只有电压（必须显式指定 OSR）</span>
 python python_src/run_tx_linear_fit.py --filetype lab_csv --filename "C:/path/to/Waveform.csv" --osr 16 --symbol_rate 53.125e9 --modulation PAM4 --prbs_pattern PRBS13 --pattern_length 8191 --pre_cursor_fit 4 --total_cursor_fit 32 --pre_cursor_ffe 4 --total_cursor_ffe 18 --dfe_tap_num 1 --output-dir outputs/run</div>
     <div class="two" style="margin-top:14px">
-      <div class="card"><h3>参数之间的关系</h3><div class="formula" style="font-size:15px;padding:10px 12px">0 ≤ D_p
-D_p + N_DFE &lt; N_p
-0 ≤ D_w &lt; N_w ≤ N_p</div></div>
+      <div class="card"><h3>参数之间的关系</h3><div class="formula math" style="padding:10px 12px">
+            <div class="fline"><span class="m" style="font-size:17px">0 ≤ <i>D</i><span class="sub">p</span></span></div>
+            <div class="fline"><span class="m" style="font-size:17px"><i>D</i><span class="sub">p</span> + <i>N</i><span class="sub">DFE</span> &lt; <i>N</i><span class="sub">p</span></span></div>
+            <div class="fline"><span class="m" style="font-size:17px">0 ≤ <i>D</i><span class="sub">w</span> &lt; <i>N</i><span class="sub">w</span> ≤ <i>N</i><span class="sub">p</span></span></div>
+          </div></div>
       <div class="card"><h3>选择建议</h3><ul>
         <li><span class="kbd">pre_cursor_fit</span> 覆盖可见前游标；<span class="kbd">total_cursor_fit</span> 覆盖主要 pulse tail；</li>
         <li>tap 不是越多越好：过长会让逆滤波追逐噪声；</li>

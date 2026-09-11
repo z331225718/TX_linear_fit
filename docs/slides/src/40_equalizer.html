@@ -19,12 +19,11 @@
     <div class="two-6-4">
       <div>
         <div class="eli5"><span class="lbl">人话</span><p>理想情况下，一个符号只应该在自己那一格产生影响。但通道把能量拖到了前后几格。均衡器就是一排「反向砝码」，把拖出去的能量抵消掉，让结果回到一根针的样子。</p></div>
-        <div class="formula">目标向量 x_p 的构造：
-  x_p[ D_p + 1 ] = 1      ← 1-based，主 tap 位置
-  其余元素 = 0
-
-FFE 问题：
-  ŵ = arg min_w ‖ P3·w − x_p ‖₂²</div>
+        <div class="formula math">
+          <div class="fline"><span class="flabel">目标向量</span><span class="m"><i>x</i><span class="sub">p</span>[&nbsp;<i>D</i><span class="sub">p</span> + 1&nbsp;] = 1&nbsp;&nbsp;<span style="font-size:15px;color:#8fa3c2">（1-based，主 tap 位置）</span></span></div>
+          <div class="fline"><span class="flabel">其余元素</span><span class="m">= 0</span></div>
+          <div class="fline"><span class="flabel">FFE 问题</span><span class="m"><i>ŵ</i> = arg min<span class="sub">w</span> ‖&nbsp;<i>P</i>3·<i>w</i> − <i>x</i><span class="sub">p</span>&nbsp;‖<span class="sub">2</span><span class="sup">2</span></span></div>
+        </div>
         <p style="margin-top:10px">也就是说：找到 <span class="kbd">N_w</span> 个系数，使脉冲卷积它们之后，<strong>最接近一个单位冲激</strong>。</p>
         <p><em>注意</em>：这是<strong>分析侧逆滤波器</strong>。GUI 默认 18 tap 表示「用 18 个系数看可恢复性」，不代表 DUT 硬件真有 18 个 tap。</p>
       </div>
@@ -61,16 +60,11 @@ FFE 问题：
     <h2>P3 卷积矩阵与 FFE 闭式解</h2>
     <div class="two-6-4">
       <div>
-        <div class="formula">把符号间隔脉冲 p_s 排成卷积矩阵 P3
-（每个 tap 对应一列，列内是移位后的 p_s，
-  并在窗口外置零）
-
-正规方程：
-  P3ᵀP3 · ŵ = P3ᵀ x_p
-
-闭式解：
-  ŵ = (P3ᵀP3)⁻¹ P3ᵀ x_p
-  firNum = ŵ</div>
+        <div class="formula math">
+          <div class="fline"><span class="flabel">卷积矩阵</span><span class="m"><i>P</i>3：每个 tap 一列，列内是移位后的 <i>p</i><span class="sub">s</span>，窗口外置零</span></div>
+          <div class="fline"><span class="flabel">正规方程</span><span class="m"><i>P</i>3<span class="sup">ᵀ</span><i>P</i>3 · <i>ŵ</i> = <i>P</i>3<span class="sup">ᵀ</span> <i>x</i><span class="sub">p</span></span></div>
+          <div class="fline"><span class="flabel">闭式解</span><span class="m"><i>ŵ</i> = (<i>P</i>3<span class="sup">ᵀ</span><i>P</i>3)<span class="sup">−1</span> <i>P</i>3<span class="sup">ᵀ</span> <i>x</i><span class="sub">p</span>&nbsp;&nbsp;&nbsp;firNum = <i>ŵ</i></span></div>
+        </div>
         <p style="margin-top:10px">形状：<span class="kbd">P3</span> 为 <span class="kbd">N_p × N_w</span>，<span class="kbd">x_p</span> 为 <span class="kbd">N_p × 1</span>，<span class="kbd">ŵ</span> 为 <span class="kbd">N_w × 1</span>。</p>
       </div>
       <div>
@@ -112,11 +106,15 @@ FFE 问题：
     <h2>两种归一化，别混用</h2>
     <div class="two">
       <div class="card"><h3>FFE-only：Σw = 1</h3>
-        <div class="formula" style="font-size:16px;padding:12px 14px">w_norm[i] = ŵ[i] / Σ ŵ[j]</div>
+        <div class="formula math center" style="padding:10px 14px">
+          <div class="fline"><span class="m"><i>w</i><span class="sub">norm</span>[<i>i</i>] =&nbsp;<span class="frac"><span class="num"><i>ŵ</i>[<i>i</i>]</span><span class="den">Σ<span class="sub">j</span> <i>ŵ</i>[<i>j</i>]</span></span></span></div>
+        </div>
         <p style="margin-top:8px">只保证<strong>直流增益为 1</strong>，不限制单个系数幅度。对应字段 <span class="kbd">firNumNorm</span>，用于画 Equalized Eye。</p>
       </div>
       <div class="card"><h3>FFE+DFE：Σ|w| = 1</h3>
-        <div class="formula" style="font-size:16px;padding:12px 14px">w_norm[i] = ŵ[i] / Σ |ŵ[j]|</div>
+        <div class="formula math center" style="padding:10px 14px">
+          <div class="fline"><span class="m"><i>w</i><span class="sub">norm</span>[<i>i</i>] =&nbsp;<span class="frac"><span class="num"><i>ŵ</i>[<i>i</i>]</span><span class="den">Σ<span class="sub">j</span> |<i>ŵ</i>[<i>j</i>]|</span></span></span></div>
+        </div>
         <p style="margin-top:8px">按 L1 归一，对应字段 <span class="kbd">firNumDFENorm</span>；FFE+DFE 分支主要用于 <strong>RLM 诊断</strong>。</p>
       </div>
     </div>
@@ -133,17 +131,12 @@ FFE 问题：
     <h2>DFE：把前几个后游标「交给判决反馈」</h2>
     <div class="two-6-4">
       <div>
-        <div class="formula">不再要求前 N_DFE 个 post-cursor 为 0，而是把
-目标改成脉冲自己的比值：
-
-  x_p[D_p + j] = p_s[i_peak + j] / p_s[i_peak]
-                 j = 1 … N_DFE
-
-这些值同时作为 DFE 抽头权重：DFEtapWeight
-
-反馈（硬判决之后）：
-  â[n]           = Q( z_FFE[n] )
-  z_after_DFE[n] = z_FFE[n] − Σ b[j]·â[n−j]</div>
+        <div class="formula math">
+          <div class="fline"><span class="flabel">新目标</span><span class="m"><i>x</i><span class="sub">p</span>[<i>D</i><span class="sub">p</span> + <i>j</i>] =&nbsp;<span class="frac"><span class="num"><i>p</i><span class="sub">s</span>[<i>i</i><span class="sub">peak</span> + <i>j</i>]</span><span class="den"><i>p</i><span class="sub">s</span>[<i>i</i><span class="sub">peak</span>]</span></span>&nbsp;&nbsp;&nbsp;<i>j</i> = 1 … <i>N</i><span class="sub">DFE</span></span></div>
+          <div class="fline"><span class="flabel">同时作为</span><span class="m">DFE 抽头权重 DFEtapWeight</span></div>
+          <div class="fline"><span class="flabel">硬判决</span><span class="m"><i>â</i>[<i>n</i>] = <i>Q</i>( <i>z</i><span class="sub">FFE</span>[<i>n</i>] )</span></div>
+          <div class="fline"><span class="flabel">反馈减法</span><span class="m"><i>z</i><span class="sub">after_DFE</span>[<i>n</i>] = <i>z</i><span class="sub">FFE</span>[<i>n</i>] − Σ<span class="sub">j</span> <i>b</i>[<i>j</i>]·<i>â</i>[<i>n</i>−<i>j</i>]</span></div>
+        </div>
       </div>
       <div>
         <div class="eli5"><span class="lbl">人话</span><p>FFE 是「事前」补偿：在判决前把波形整形。DFE 是「事后」补偿：既然前面的符号已经判出来了，就按它的电平把当前样本里残留的影响直接减掉。</p></div>
@@ -170,11 +163,12 @@ FFE 问题：
           <li>脉冲窗口太短，重要前后游标落在窗口外；</li>
           <li>通道零点或高度相关的列使 <span class="kbd">P3ᵀP3</span> 病态。</li>
         </ul>
-        <div class="formula" style="margin-top:10px">参数必须满足：
-  0 ≤ D_p
-  D_p + N_DFE &lt; N_p
-  0 ≤ D_w &lt; N_w ≤ N_p
-  N_w ≤ N_p  （否则必然奇异）</div>
+        <div class="formula math" style="margin-top:10px">
+          <div class="fline"><span class="flabel">参数约束</span><span class="m">0 ≤ <i>D</i><span class="sub">p</span></span></div>
+          <div class="fline"><span class="flabel"></span><span class="m"><i>D</i><span class="sub">p</span> + <i>N</i><span class="sub">DFE</span> &lt; <i>N</i><span class="sub">p</span></span></div>
+          <div class="fline"><span class="flabel"></span><span class="m">0 ≤ <i>D</i><span class="sub">w</span> &lt; <i>N</i><span class="sub">w</span> ≤ <i>N</i><span class="sub">p</span></span></div>
+          <div class="fline"><span class="flabel"></span><span class="m"><i>N</i><span class="sub">w</span> ≤ <i>N</i><span class="sub">p</span>&nbsp;&nbsp;<span style="font-size:15px;color:#8fa3c2">（否则必然奇异）</span></span></div>
+        </div>
       </div>
       <div>
         <div class="card"><h3>程序怎么处理</h3><ul>

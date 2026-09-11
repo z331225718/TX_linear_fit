@@ -47,19 +47,28 @@ def main() -> int:
         tail = src[m.end():m.end() + 1200]
         t = re.search(r'<h[12][^>]*>(.*?)</h[12]>', tail, re.S)
         title = re.sub(r'<[^>]+>', '', t.group(1)).strip() if t else '(divider)'
+        ovf = re.search(r'data-ovf-x="(\d+)"', m.group(1))
         rows.append((len(rows) + 1, int(px.group(1)),
-                     float(sc.group(1)) if sc else 1.0, title))
+                     float(sc.group(1)) if sc else 1.0, title,
+                     int(ovf.group(1)) if ovf else 0))
 
     over = [r for r in rows if r[2] < 0.999]
+    wide = [r for r in rows if r[4] > 2]
     print('available content height: ' + str(AVAIL) + ' px')
     print('measured content slides : ' + str(len(rows)))
-    print('slides needing shrink   : ' + str(len(over)))
+    print('slides needing height shrink : ' + str(len(over)))
+    print('slides with horizontal overflow: ' + str(len(wide)))
     print('')
-    for n, px, sc, title in sorted(rows, key=lambda r: r[2])[:15]:
+    for n, px, sc, title, ovf in sorted(rows, key=lambda r: r[2])[:12]:
         flag = '  <== TRIM' if sc < 0.999 else ''
         print(('%.3f' % sc) + '  ' + str(px).rjust(4) + ' px  #' + str(n).rjust(2) +
-              '  ' + title[:46] + flag)
-    return 0 if not over else 1
+              '  ' + title[:44] + flag)
+    if wide:
+        print('')
+        print('horizontal overflow (px beyond content box):')
+        for n, px, sc, title, ovf in sorted(wide, key=lambda r: -r[4])[:12]:
+            print('  +' + str(ovf).rjust(3) + ' px  #' + str(n).rjust(2) + '  ' + title[:48])
+    return 0 if not over and not wide else 1
 
 
 if __name__ == '__main__':
