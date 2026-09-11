@@ -53,7 +53,7 @@
           <div class="fline"><span class="flabel">相位矩阵</span><span class="m"><i>A</i>[:, <i>zz</i>] = 第 <i>zz</i> 个相位的均衡输出,&nbsp;&nbsp;shape(<i>A</i>) = <i>L</i><span class="sub">max</span> × <i>M</i></span></div>
           <div class="fline"><span class="flabel">行优先展开</span><span class="m">re_interleaved[<i>i</i>·<i>M</i> + <i>zz</i>] = <i>A</i>[<i>i</i>, <i>zz</i>]</span></div>
         </div>
-        <div class="warn"><span class="lbl">移植时最容易错的一行</span><p>这一步在 MATLAB 参考实现里是<strong>行主序</strong>平铺（<span class="kbd">(zz−1)*cols + kk</span> 且 zz 为行号）。若按列主序拼装，眼图与眼宽指标会整体错位 —— 本项目正是靠 golden 对比才发现并修正的。</p></div>
+        <div class="warn"><span class="lbl">最容易错的一行</span><p>这里必须是<strong>行主序</strong>平铺：索引写作 <span class="kbd">(zz−1)*cols + kk</span>，其中 <span class="kbd">zz</span> 是行号、<span class="kbd">kk</span> 是列号。若按列主序拼装，眼图与眼宽指标会整体错位。</p></div>
       </div>
       <div>
         <div class="imgbox"><img src="{{IMG_EYE_EQ}}" alt="均衡后眼图"></div>

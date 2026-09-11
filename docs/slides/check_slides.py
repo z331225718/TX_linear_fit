@@ -87,12 +87,16 @@ def main() -> int:
 
     required = [
         # algorithm content that must survive edits
-        'class="formula math"', 'class="frac"', 'known deviation',
-        'Data, ', 'freqz', 'colon', 'RLM', 'ISI', 'Nyquist',
-        'shape(<i>P</i>)', 'RLM<span class="sub">adj</span>',
+        'class="formula math"', 'class="frac"', 'Data, ', 'RLM', 'ISI',
+        'Nyquist', 'shape(<i>P</i>)', 'RLM<span class="sub">adj</span>',
         'SNDR<span class="sub">fit</span>', 'SNDR<span class="sub">std</span>',
     ]
     missing = [r for r in required if r not in src]
+
+    # the audience must not see the reference-implementation story
+    for leak in ('MATLAB', 'matlab', 'golden', 'Golden', 'known deviation'):
+        if leak in src:
+            failures.append('reference-implementation leak in the deck: ' + leak)
 
     # regression guard: no more ASCII-art fractions or aligned-blank math
     ascii_math = re.findall(r'[\u2500]{3,}', src)

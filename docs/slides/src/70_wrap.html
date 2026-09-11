@@ -1,6 +1,6 @@
-<section class="slide" data-sec="第7章 上手">
+<section class="slide" data-sec="第6章 上手">
   <div class="body divider">
-    <div class="big">07</div>
+    <div class="big">06</div>
     <h2>上手与自查</h2>
     <ul>
       <li>两条 CLI 命令跑通端到端</li>
@@ -8,11 +8,11 @@
       <li>代码地图、参考资料、一页纸记忆卡</li>
     </ul>
   </div>
-  <div class="sec">第 7 章 · 上手</div>
+  <div class="sec">第 6 章 · 上手</div>
   <div class="num">44</div>
 </section>
 
-<section class="slide" data-sec="第7章 上手">
+<section class="slide" data-sec="第6章 上手">
   <div class="body">
     <div class="kicker">CLI</div>
     <h2>两条命令覆盖两类输入</h2>
@@ -34,11 +34,11 @@ python python_src/run_tx_linear_fit.py --filetype lab_csv --filename "C:/path/to
       </ul></div>
     </div>
   </div>
-  <div class="sec">第 7 章 · 上手</div>
+  <div class="sec">第 6 章 · 上手</div>
   <div class="num">45</div>
 </section>
 
-<section class="slide" data-sec="第7章 上手">
+<section class="slide" data-sec="第6章 上手">
   <div class="body">
     <div class="kicker">GUI</div>
     <h2>五步跑完一次分析</h2>
@@ -67,11 +67,11 @@ python python_src/run_tx_linear_fit.py --filetype lab_csv --filename "C:/path/to
       </div>
     </div>
   </div>
-  <div class="sec">第 7 章 · 上手</div>
+  <div class="sec">第 6 章 · 上手</div>
   <div class="num">46</div>
 </section>
 
-<section class="slide" data-sec="第7章 上手">
+<section class="slide" data-sec="第6章 上手">
   <div class="body">
     <div class="kicker">代码地图</div>
     <h2>想改哪里，先看这张表</h2>
@@ -95,22 +95,20 @@ python python_src/run_tx_linear_fit.py --filetype lab_csv --filename "C:/path/to
           <tr><td>图形</td><td class="mono">plots.py</td></tr>
           <tr><td>HTML 报告</td><td class="mono">report.py</td></tr>
           <tr><td>GUI / CLI</td><td class="mono">gui.py / run_tx_linear_fit.py</td></tr>
-          <tr><td>golden 对比</td><td class="mono">verify_against_golden.py</td></tr>
-          <tr><td>MATLAB 语义封装</td><td class="mono">matlab_compat.py</td></tr>
+          <tr><td>数值回归自检</td><td class="mono">tests/（pytest）</td></tr>
         </table>
       </div>
     </div>
     <div class="chips" style="margin-top:12px">
       <span class="chip acc">测试：python_src/tests/（pytest）</span>
       <span class="chip">技术文档：docs/TECHNICAL_GUIDE.md</span>
-      <span class="chip warn">golden 采集：matlab_golden/capture_golden*.m</span>
     </div>
   </div>
-  <div class="sec">第 7 章 · 上手</div>
+  <div class="sec">第 6 章 · 上手</div>
   <div class="num">47</div>
 </section>
 
-<section class="slide" data-sec="第7章 上手">
+<section class="slide" data-sec="第6章 上手">
   <div class="body">
     <div class="kicker">延伸阅读</div>
     <h2>想深挖，从这里开始</h2>
@@ -123,11 +121,11 @@ python python_src/run_tx_linear_fit.py --filetype lab_csv --filename "C:/path/to
     <div class="warn"><span class="lbl">提醒</span><p>标准条款与限值会随修订变化；任务组材料不是标准正文。正式测试应查阅目标标准的<strong>当前完整文本</strong>，并以目标 PHY、测试点与规定滤波器为准。</p></div>
     <div class="card"><h3>与本材料的对应关系</h3><p>公式、符号与边界描述均与仓库内 <span class="kbd">docs/TECHNICAL_GUIDE.md</span> 一致；本材料是它的<strong>教学版</strong>：补了类比、图示、代码落点与排障清单。</p></div>
   </div>
-  <div class="sec">第 7 章 · 上手</div>
+  <div class="sec">第 6 章 · 上手</div>
   <div class="num">48</div>
 </section>
 
-<section class="slide" data-sec="第7章 上手">
+<section class="slide" data-sec="第6章 上手">
   <div class="body">
     <div class="kicker">总结</div>
     <h2>一页纸记忆卡</h2>
@@ -147,13 +145,13 @@ python python_src/run_tx_linear_fit.py --filetype lab_csv --filename "C:/path/to
         <h3>三条纪律</h3>
         <ul>
           <li><strong>不猜</strong>：OSR、极性、参数约束不满足就报错；</li>
-          <li><strong>不掩盖</strong>：奇异不用伪逆糊过去，差异登记为 known deviation；</li>
-          <li><strong>可验证</strong>：同一份波形 + golden 逐字段比对，1e-9 才算过。</li>
+          <li><strong>不掩盖</strong>：奇异就报错，不用伪逆糊过去；已知取舍在文档里登记；</li>
+          <li><strong>可复现</strong>：同一份波形、同一组参数，结果逐项一致（1e-9 量级）。</li>
         </ul>
         <div class="eli5" style="margin-top:10px"><span class="lbl">最后一句话</span><p>这套算法的本质只有一句：<em>用已知的符号序列，把未知的脉冲响应「解」出来，再据此设计均衡器并量化剩余损伤。</em></p></div>
       </div>
     </div>
   </div>
-  <div class="sec">第 7 章 · 上手</div>
+  <div class="sec">第 6 章 · 上手</div>
   <div class="num">49</div>
 </section>

@@ -56,7 +56,7 @@
       </div>
     </div>
     <div class="code" style="max-height:80px"><span class="cmt"># 代码落点</span>
-<b>fit_pulse_response.py</b>  Y = data[:M*N].reshape(M, N, order='F')   <span class="cmt"># 列优先 = MATLAB reshape</span></div>
+<b>fit_pulse_response.py</b>  Y = data[:M*N].reshape(M, N, order='F')   <span class="cmt"># 列优先展开（order=F）</span></div>
   </div>
   <div class="sec">第 3 章 · 线性拟合</div>
   <div class="num">17</div>
@@ -137,7 +137,7 @@
       </div>
     </div>
     <div class="code" style="max-height:80px"><span class="cmt"># 代码落点</span>
-<b>fit_pulse_response.py</b>  P = (Y @ X.T) @ inv(X @ X.T)   <span class="cmt"># 保持与 golden 相同的运算顺序</span></div>
+<b>fit_pulse_response.py</b>  P = (Y @ X.T) @ inv(X @ X.T)   <span class="cmt"># 显式正规方程 + 严格求逆</span></div>
   </div>
   <div class="sec">第 3 章 · 线性拟合</div>
   <div class="num">19</div>
@@ -150,12 +150,12 @@
     <div class="two">
       <div class="card"><h3>现在的做法</h3><ul>
         <li>显式写正规方程 <span class="kbd">P̂ = YXᵀ(XXᵀ)⁻¹</span>；</li>
-        <li>严格矩阵求逆，保持与参考实现相同的求解顺序；</li>
+        <li>严格矩阵求逆，求解顺序固定、可复现；</li>
         <li><span class="kbd">XXᵀ</span> 奇异时<strong>直接报错</strong>，不静默换成 <span class="kbd">pinv</span>。</li>
       </ul></div>
       <div class="card"><h3>为什么</h3><ul>
-        <li><strong>可解释</strong>：结果与标准/参考工具一致，异常可追溯到具体参数；</li>
-        <li><strong>可复现</strong>：与 MATLAB golden 逐项对齐到 1e-9 量级；</li>
+        <li><strong>可解释</strong>：结果与标准定义一致，异常可追溯到具体参数；</li>
+        <li><strong>可复现</strong>：同一输入逐项一致，数值回归到 1e-9 量级；</li>
         <li><strong>不掩盖问题</strong>：伪逆会给出「看起来能用」但物理无意义的脉冲与抽头。</li>
       </ul></div>
     </div>
@@ -195,8 +195,8 @@
             <rect x="184" y="20" width="126" height="36" rx="6" fill="#070d19" stroke="#34d399" stroke-opacity=".5"/>
             <text x="247" y="43" text-anchor="middle" font-size="11.5" fill="#d1fae5">p[0] p[1] p[2] p[3] …</text>
             <text x="247" y="74" text-anchor="middle" font-size="11" fill="#8fa3c2">先走完第 0 列，再走第 1 列</text>
-            <text x="20" y="160" fill="#f59e0b" font-size="12">与 MATLAB reshape 完全一致</text>
-            <text x="20" y="182" fill="#8fa3c2" font-size="12">这一步是最常见的移植 bug：</text>
+            <text x="20" y="160" fill="#f59e0b" font-size="12">列优先（order=F）展开</text>
+            <text x="20" y="182" fill="#8fa3c2" font-size="12">这一步最常见的 bug：</text>
             <text x="20" y="202" fill="#8fa3c2" font-size="12">用行优先展开会让相位整体错位，</text>
             <text x="20" y="222" fill="#8fa3c2" font-size="12">指标随之全面偏移。</text>
           </g>
