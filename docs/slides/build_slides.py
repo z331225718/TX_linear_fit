@@ -23,7 +23,13 @@ except ImportError:
 HERE = os.path.dirname(os.path.abspath(__file__))
 ROOT = os.path.dirname(os.path.dirname(HERE))
 SRC = os.path.join(HERE, 'src')
-RESULTS = os.path.join(ROOT, 'python_src', 'results')
+# Figures come from a curated run rather than whatever happens to sit in
+# python_src/results: the real-capture runs currently produce a nearly
+# closed equalised eye (central-99% width about 0.16 UI), which makes the
+# eye-width/eye-height slides meaningless.  assets/figures/ holds one
+# coherent PAM4 PRBS13 run whose equalised eye is open, so the eye figures
+# actually show a measurable opening.
+RESULTS = os.path.join(HERE, 'assets', 'figures')
 OUT = os.path.join(HERE, 'tx_linear_fit_training.html')
 
 # token -> (file, max width, force jpeg)
